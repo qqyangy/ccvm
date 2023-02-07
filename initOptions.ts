@@ -154,7 +154,12 @@ const formatDataRoProps = (data: any, target: any) => {
             })
         });
         opt.watchImmediate && opt.watchImmediate.forEach((k) => {
-            opt.watch[k] && opt.watch[k].call(target, target[k]);
+            if (opt.watch[k] && k) {
+                const val = k.split(".").reduce((r, _k) => {
+                    return r && r[_k];
+                }, target)
+                opt.watch[k].call(target, val);
+            }
         })
     }
 export function execVmOptions(optins: VmOptions, target: VmComponent) {
