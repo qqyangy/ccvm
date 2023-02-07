@@ -1,5 +1,6 @@
 import { _decorator, Component, Node } from 'cc';
 import { VmComponent, VmOptions } from './VmComponent';
+import { DataEvent, listenerDEs, oldDEs, recoveryDEs } from './DataEvent';
 const { ccclass, property } = _decorator;
 const evalfuncsring = `function ____evalfunc____(optins,code,_____data_____){
                 var ____code____=code;
@@ -28,7 +29,6 @@ function getExpressionAry(exp: string): { attrStr: string, valueStr: string } {
         valueStr: string = expv.replace(/^[^=]*=/, "").trim();
     return attrStr && valueStr ? { attrStr, valueStr } : null
 }
-interface Bindcfg { keys?: Set<string>, update?: Function };
 
 export class BindBase extends Component {
     @property([String])
@@ -43,13 +43,11 @@ export class BindBase extends Component {
             return r[o.constructor.name] = o, r;
         }, { node: this.node }))
     }
-    private bindinfo: object[] = [];
     private bindAttribute() {
         if (!this.binds || this.binds.length < 1) return;
         const vm: VmComponent = this.getBindVmComponent();//获取数据源组件
         if (!vm) return;
         const _components = this.getMynodeComponents();
-        this.bindinfo = [];//所有的绑定关系
         this.binds.forEach(t => {
             const exps = getExpressionAry(t);
             if (!exps) return;
@@ -64,27 +62,27 @@ export class BindBase extends Component {
                 if (!vmOptions || !vmOptions.props || Object.prototype.hasOwnProperty.call(vmOptions.props, attrStrA[1])) return;
             }
             /******限定VmComponent组件只能被绑定props --end******/
-            const bindcfg: Bindcfg = {};
+            let listenerOff: Function;
             const setdata = () => {
-                vm.___bindKeys___ = new Set();
-                const val = evalfunc.call(vm, vm, valueStr);
-                bindcfg.keys = vm.___bindKeys___;
-                vm.___bindKeys___ = null;
-                evalfunc.call(this, _components, attrStr + "=", val);
+                const oDEs: any = oldDEs();
+                DataEvent.DEs = new Set();
+                let val;
+                try {
+                    val = evalfunc.call(vm, vm, valueStr);
+                } catch (e) {
+                    throw new Error(`解析binds表达式"${t}"中取值"${valueStr}"出现错误`);
+                }
+                const Des: Set<DataEvent> = DataEvent.DEs;
+                listenerOff && listenerOff();//移除老的监听
+                listenerOff = !Des ? null : listenerDEs(Des, "bindUpdate", setdata);
+                DataEvent.DEs = recoveryDEs(oDEs);//处理完成后恢复之前状态
+                try {
+                    evalfunc.call(this, _components, attrStr + "=", val);
+                } catch (e) {
+                    throw new Error(`解析binds表达式"${t}"中属性"${attrStr}"出现错误`);
+                }
             }
             setdata();
-            bindcfg.update = setdata;
-            bindcfg.keys?.size && this.bindinfo.push(bindcfg);
-        });
-        vm.$vmOn("bindUpdate", this.updateEvent, this);
-    }
-    private updateEvent(attr: string[]) {
-        this.bindinfo.filter((o: Bindcfg) => {
-            return attr.find((key: string) => {
-                return o.keys.has(key);
-            })
-        }).forEach((o: Bindcfg) => {
-            o.update();//更新数据
         });
     }
     //获取指定节点对应VmComponent组件
@@ -118,9 +116,13 @@ export class BindBase extends Component {
             if (!exps) return;
             const { attrStr, valueStr } = exps;
             this.node.on(attrStr, (...p) => {
-                const val = evalfunc.call(vm, vm, valueStr);
-                if (val instanceof Function) {
-                    val.call(vm, ...p);
+                try {
+                    const val = evalfunc.call(vm, vm, valueStr);
+                    if (val instanceof Function) {
+                        val.call(vm, ...p);
+                    }
+                } catch (e) {
+                    throw new Error(`解析event表达式"${exp}"中属性"${valueStr}"出现错误`);
                 }
             })
         })
