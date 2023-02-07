@@ -48,7 +48,7 @@ const recursionWatch = (par: recursparmas) => {
             }
         }
         if (depthcfg && depthcfg[k]) depth = depthcfg[k];//获取当前k需要的深度
-        target[k] = depth > 0 ? recursionWatch({
+        data[k] = depth > 0 ? recursionWatch({
             data: data[k], depth: depth - 1, DE, key: _key
         }) : data[k];
         return r;
