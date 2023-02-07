@@ -13,6 +13,7 @@ export class VmComponent extends Component {
     public ___bindKeys___: Set<string>;
     public static ___bindKeys___: Set<string>;
     public ___$dataEvent___: DataEvent;
+    public ___$tempHelp___: {};
     constructor(...p) {
         super(...p);
         if (this._$vmOptions) return;

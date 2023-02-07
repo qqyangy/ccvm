@@ -8,6 +8,7 @@ export interface VmOptions {
     watchImmediate?: string[],
     methods?: { [key: string]: Function },
     computed?: { [key: string]: Function },
+    tempHelp?: {},
     onLoad?: Function,
     onEnable?: Function,
     start?: Function,
@@ -172,4 +173,5 @@ export function execVmOptions(optins: VmOptions, target: VmComponent) {
     resethooks(optins, target);//hooks
     copyfunction(optins, target);//methods
     setWatch(optins, target, target.___$dataEvent___);//watch
+    target.___$tempHelp___ = optins.tempHelp;
 }
