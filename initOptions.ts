@@ -145,23 +145,27 @@ const formatDataRoProps = (data: any, target: any) => {
         }
     },
     //处理watch
-    setWatch = (opt: VmOptions, target: any, DE: DataEvent) => {
-        if (!opt.watch || Object.keys(opt.watch).length < 1) return;
-        DE.on("bindUpdate", (keys: string[], vals: any) => {
-            keys.forEach(k => {
-                if (opt.watch[k]) {
-                    opt.watch[k].call(target, ...vals[k]);
-                }
-            })
-        });
-        opt.watchImmediate && opt.watchImmediate.forEach((k) => {
-            if (opt.watch[k] && k) {
-                const val = k.split(".").reduce((r, _k) => {
-                    return r && r[_k];
-                }, target)
-                opt.watch[k].call(target, val);
+    setWatch = (opt: VmOptions, target: any) => {
+        if (!opt.watch) return;
+        const watch = opt.watch;
+        Object.keys(watch).forEach((key: string) => {
+            const watchfunc: Function = watch[key];
+            let listenerOff: Function, oldval: any;
+            const getval = (nocall?: boolean) => {
+                const oDEs: any = oldDEs();
+                DataEvent.DEs = new Set();
+                const val = key.split(".").reduce((r, _k) => {
+                    return r && Object.prototype.toString.call(r) === "[object Object]" ? r[_k] : undefined;
+                }, target);
+                const Des: Set<DataEvent> = DataEvent.DEs;
+                listenerOff && listenerOff();//移除老的监听
+                listenerOff = !Des ? null : listenerDEs(Des, "bindUpdate", getval);
+                DataEvent.DEs = recoveryDEs(oDEs);//处理完成后恢复之前状态
+                !nocall && watchfunc.call(target, val, oldval);
+                oldval = val;
             }
-        })
+            getval(!opt.watchImmediate || opt.watchImmediate.indexOf(key) === -1);
+        });
     }
 export function execVmOptions(optins: VmOptions, target: VmComponent) {
     target.___$dataEvent___ = new DataEvent();
@@ -172,6 +176,6 @@ export function execVmOptions(optins: VmOptions, target: VmComponent) {
     setComputed(optins, target, target.___$dataEvent___);//computed
     resethooks(optins, target);//hooks
     copyfunction(optins, target);//methods
-    setWatch(optins, target, target.___$dataEvent___);//watch
+    setWatch(optins, target);//watch
     target.___$tempHelp___ = optins.tempHelp;
 }
