@@ -35,9 +35,9 @@ function getExpressionAry(exp: string): { attrStr: string, valueStr: string } {
 
 export class BindBase extends Component {
     @property([String])
-    public binds: string[];
+    public binds: string[] = [];
     @property([String])
-    public events: string[];
+    public events: string[] = [];
 
     private _components: Object;
     //获取当前节点挂在的所有组件和及节点
@@ -62,7 +62,7 @@ export class BindBase extends Component {
             if (bindTarget instanceof VmComponent) {
                 if (attrStrA.length !== 2) return;
                 const vmOptions: VmOptions = bindTarget["vmOptions"];
-                if (!vmOptions || !vmOptions.props || Object.prototype.hasOwnProperty.call(vmOptions.props, attrStrA[1])) return;
+                if (!vmOptions || !vmOptions.props || !Object.prototype.hasOwnProperty.call(vmOptions.props, attrStrA[1])) return;
             }
             /******限定VmComponent组件只能被绑定props --end******/
             let listenerOff: Function;

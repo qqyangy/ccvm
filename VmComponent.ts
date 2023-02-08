@@ -4,6 +4,7 @@ import { DataEvent } from './DataEvent';
 const { ccclass, property } = _decorator;
 
 export { type VmOptions };
+@ccclass("VmComponent")
 export class VmComponent extends Component {
     @property(Boolean)
     public isVmNode: boolean = false;
