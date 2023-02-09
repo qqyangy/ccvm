@@ -39,6 +39,9 @@ export class BindBase extends Component {
     @property([String])
     public events: string[] = [];
 
+    private callExcBinds: Set<Function>;
+    private callDeBinds: Set<Function>;
+
     private _components: Object;
     //获取当前节点挂在的所有组件和及节点
     private getMynodeComponents(): Object {
@@ -48,6 +51,7 @@ export class BindBase extends Component {
     }
     private bindAttribute() {
         if (!this.binds || this.binds.length < 1) return;
+        this.callExcBinds = this.callExcBinds || new Set();//设置收集解除绑定集合
         const vm: VmComponent = this.getBindVmComponent();//获取数据源组件
         if (!vm) return;
         const _components = this.getMynodeComponents();
@@ -76,15 +80,21 @@ export class BindBase extends Component {
                     throw new Error(`解析binds表达式"${t}"中取值"${valueStr}"出现错误`);
                 }
                 const Des: Set<DataEvent> = DataEvent.DEs;
-                listenerOff && listenerOff();//移除老的监听
+                this.callDeBinds = this.callDeBinds || new Set();//设置收集解除绑定集合
+                if (listenerOff) {
+                    this.callDeBinds.has(listenerOff) && this.callDeBinds.delete(listenerOff);//删除老解除绑定函数
+                    listenerOff();//移除老的监听
+                }
                 listenerOff = !Des ? null : listenerDEs(Des, "bindUpdate", setdata);
                 DataEvent.DEs = recoveryDEs(oDEs);//处理完成后恢复之前状态
+                listenerOff && this.callDeBinds.add(listenerOff);//添加解除绑定函数
                 try {
                     evalfunc.call(this, _components, attrStr + "=", val);
                 } catch (e) {
                     throw new Error(`解析binds表达式"${t}"中属性"${attrStr}"出现错误`);
                 }
             }
+            this.callExcBinds.add(setdata);
             setdata();
         });
     }
@@ -130,8 +140,25 @@ export class BindBase extends Component {
             })
         })
     }
+    deBindFunc() {
+        if (this.callDeBinds) {
+            this.callDeBinds.forEach(fn => fn());//禁用解绑函数
+            this.callDeBinds = null;
+        }
+    }
+    onEnable() {
+        if (!this.callDeBinds && this.callExcBinds) {
+            this.callExcBinds.forEach(fn => fn());//启用所有绑定
+        }
+    }
     start() {
         this.bindAttribute();
         this.bindEvent();
+    }
+    onDisable() {
+        this.deBindFunc();
+    }
+    onDestroy() {
+        this.deBindFunc();
     }
 }
