@@ -1,4 +1,4 @@
-import { _decorator, Component, Node } from 'cc';
+import { _decorator, Component, Node, CCString } from 'cc';
 import { VmComponent, VmOptions } from './VmComponent';
 import { DataEvent, listenerDEs, oldDEs, recoveryDEs } from './DataEvent';
 import tools from './tools';
@@ -6,7 +6,7 @@ const { evalfunc, getExpressionAry } = tools;
 const { ccclass, property } = _decorator;
 
 export class BindBase extends Component {
-    @property(String)
+    @property(CCString)
     public bindActive: string = "";
     @property([String])
     public binds: string[] = [];
