@@ -1,39 +1,13 @@
 import { _decorator, Component, Node } from 'cc';
 import { VmComponent, VmOptions } from './VmComponent';
 import { DataEvent, listenerDEs, oldDEs, recoveryDEs } from './DataEvent';
+import tools from './tools';
+const { evalfunc, getExpressionAry } = tools;
 const { ccclass, property } = _decorator;
-const evalfuncsring = `function ____evalfunc____(optins,code,_____data_____,____tempHelp____){
-                var ____code____=code;
-                if(_____data_____!==undefined && code.charAt(code.length-1)==="="){
-                    ____code____=code+"_____data_____";
-                }
-                ____tempHelp____=____tempHelp____||{};
-                with (____tempHelp____){
-                    with (optins) {
-                        return eval(____code____);
-                    }
-                }
-            }
-            document.head.removeChild(document.getElementById("____evalfuncdom_____"));
-            `
-function evalfunc(optins: any, code: any, _____data_____: any, tempHelp: {}) {
-    if (!window["____evalfunc____"]) {
-        const script = document.createElement("script");
-        script.id = "____evalfuncdom_____";
-        document.head.appendChild(script);
-        script.innerHTML = evalfuncsring;
-    }
-    return window["____evalfunc____"].call(this, optins, code, _____data_____, tempHelp);
-}
-function getExpressionAry(exp: string): { attrStr: string, valueStr: string } {
-    const expv = exp && exp.trim();
-    if (!expv) return;
-    const attrStr: string = expv.split("=")[0].trim(),
-        valueStr: string = expv.replace(/^[^=]*=/, "").trim();
-    return attrStr && valueStr ? { attrStr, valueStr } : null
-}
 
 export class BindBase extends Component {
+    @property(String)
+    public bindActive: string = "";
     @property([String])
     public binds: string[] = [];
     @property([String])
@@ -41,6 +15,10 @@ export class BindBase extends Component {
 
     private callExcBinds: Set<Function>;
     private callDeBinds: Set<Function>;
+    private _vm: VmComponent;
+    private getVm() {
+        return this._vm = this._vm || this.getBindVmComponent();
+    }
 
     private _components: Object;
     //获取当前节点挂在的所有组件和及节点
@@ -49,10 +27,53 @@ export class BindBase extends Component {
             return r[o.constructor.name] = o, r;
         }, { node: this.node }))
     }
+    // 绑定active
+    private _disbindActive: Function;
+    private _$bindActive: string;
+    private _$successbindActive: boolean = false;//是否已经绑定bindActive
+    private initBindActive(nodefine: boolean = false) {
+        if (this._$successbindActive) return;
+        const valueStr = (this._$bindActive || "").trim();
+        if (!nodefine && !this._$bindActive) {
+            return Object.defineProperty(this, "bindActive", {
+                get: () => {
+                    return this._$bindActive;
+                },
+                set: (bindstr: string) => {
+                    this._$bindActive = bindstr;
+                    Promise.resolve().then(() => {
+                        this.initBindActive(true);
+                    });
+                }
+            })
+        }
+        if (!valueStr) return;
+        const vm: VmComponent = this.getVm();//获取数据源组件
+        if (!vm) return;
+        this._$successbindActive = true;
+        const setdata = () => {
+            const oDEs: any = oldDEs();
+            DataEvent.DEs = new Set();
+            let val;
+            try {
+                val = evalfunc.call(vm, vm, valueStr, undefined, vm.___$tempHelp___);
+            } catch (e) {
+                throw new Error(`解析bindActive表达式求值"${valueStr}"出现错误`);
+            }
+            this.node.active = !!val;
+            const Des: Set<DataEvent> = DataEvent.DEs;
+            if (this._disbindActive) {
+                this._disbindActive();
+            }
+            this._disbindActive = !Des ? null : listenerDEs(Des, "bindUpdate", setdata);
+            DataEvent.DEs = recoveryDEs(oDEs);//处理完成后恢复之前状态
+        }
+        setdata();
+    }
     private bindAttribute() {
         if (!this.binds || this.binds.length < 1) return;
         this.callExcBinds = this.callExcBinds || new Set();//设置收集解除绑定集合
-        const vm: VmComponent = this.getBindVmComponent();//获取数据源组件
+        const vm: VmComponent = this.getVm();//获取数据源组件
         if (!vm) return;
         const _components = this.getMynodeComponents();
         this.binds.forEach(t => {
@@ -77,7 +98,7 @@ export class BindBase extends Component {
                 try {
                     val = evalfunc.call(vm, vm, valueStr, undefined, vm.___$tempHelp___);
                 } catch (e) {
-                    throw new Error(`解析binds表达式"${t}"中取值"${valueStr}"出现错误`);
+                    throw new Error(`解析binds表达式"${t}"中求值"${valueStr}"出现错误`);
                 }
                 const Des: Set<DataEvent> = DataEvent.DEs;
                 this.callDeBinds = this.callDeBinds || new Set();//设置收集解除绑定集合
@@ -122,7 +143,7 @@ export class BindBase extends Component {
     //绑定事件
     private bindEvent() {
         if (!this.events || this.events.length < 1) return;
-        const vm: VmComponent = this.getBindVmComponent();//获取数据源组件
+        const vm: VmComponent = this.getVm();//获取数据源组件
         if (!vm) return;
         this.events.forEach((exp: string) => {
             const exps = getExpressionAry(exp);
@@ -152,6 +173,7 @@ export class BindBase extends Component {
         }
     }
     start() {
+        this.initBindActive(true);
         this.bindAttribute();
         this.bindEvent();
     }
@@ -160,5 +182,10 @@ export class BindBase extends Component {
     }
     onDestroy() {
         this.deBindFunc();
+        this._disbindActive && this._disbindActive();//解绑active
+    }
+    constructor(...p) {
+        super(...p);
+        this.initBindActive();
     }
 }
