@@ -1,4 +1,4 @@
-import { _decorator, Component, Node, EventTarget } from 'cc';
+import { _decorator, Component, Node, EventTarget, CCString } from 'cc';
 import { execVmOptions, VmOptions } from './initOptions';
 import { DataEvent } from './DataEvent';
 const { ccclass, property } = _decorator;
@@ -8,7 +8,7 @@ export { type VmOptions };
 export class VmComponent extends Component {
     @property(Boolean)
     public isVmNode: boolean = false;
-    @property(Boolean)
+    @property(CCString)
     public vmRootName: string;
     private _$vmOptions: VmOptions;
     public ___bindKeys___: Set<string>;
