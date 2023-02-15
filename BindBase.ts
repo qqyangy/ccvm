@@ -150,13 +150,14 @@ export class BindBase extends Component {
             if (!exps) return;
             const { attrStr, valueStr } = exps;
             this.node.on(attrStr, (...p) => {
+                let val;
                 try {
-                    const val = evalfunc.call(vm, vm, valueStr);
-                    if (val instanceof Function) {
-                        val.call(vm, ...p);
-                    }
+                    val = evalfunc.call(vm, vm, valueStr);
                 } catch (e) {
                     throw new Error(`解析event表达式"${exp}"中属性"${valueStr}"出现错误`);
+                }
+                if (val && val instanceof Function) {
+                    val.call(vm, ...p);
                 }
             })
         })
