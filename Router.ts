@@ -51,8 +51,8 @@ export class Router {
         this.del();
         window["_ccRouter"] = Router;
     }
-    push(routeName: string, rootData?: {}, deletType?: number): Router {
-        return this.add(routeName, rootData, () => {
+    push(routeName: string, routeData?: {}, deletType?: number): Router {
+        return this.add(routeName, routeData, () => {
             this.del(deletType);
         });
     }
