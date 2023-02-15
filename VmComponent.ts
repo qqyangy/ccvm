@@ -7,7 +7,7 @@ export { type VmOptions };
 @ccclass("VmComponent")
 export class VmComponent extends Component {
     @property(Boolean)
-    public isVmNode: boolean = false;
+    public isVmNode: boolean = true;
     @property(CCString)
     public vmRootName: string;
     private _$vmOptions: VmOptions;
