@@ -98,6 +98,7 @@ export class BindBase extends Component {
                 try {
                     val = evalfunc.call(vm, vm, valueStr, undefined, vm.___$tempHelp___);
                 } catch (e) {
+                    console.log(vm);
                     throw new Error(`解析binds表达式"${t}"中求值"${valueStr}"出现错误`);
                 }
                 const Des: Set<DataEvent> = DataEvent.DEs;

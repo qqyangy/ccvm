@@ -114,6 +114,15 @@ export class Router {
         }
         return null;
     }
+    public static getParamsData(target: Component | Node) {
+        if (!target) return null;
+        if (target instanceof Component) {
+            return target.node[routeDataUrl] || null;
+        } else if (target instanceof Node) {
+            return target[routeDataUrl] || null;
+        }
+        return null;
+    }
     routers: RouterCfg;
     deletType: number;//0设置active 1remove 2remove并且destroy
     node: Node;
