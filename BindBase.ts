@@ -58,7 +58,8 @@ export class BindBase extends Component {
             try {
                 val = evalfunc.call(vm, vm, valueStr, undefined, vm.___$tempHelp___);
             } catch (e) {
-                throw new Error(`解析bindActive表达式求值"${valueStr}"出现错误`);
+                console.log(`%c解析bindActive表达式求值"${valueStr}"出现错误`, 'color: red;');
+                throw e;
             }
             this.node.active = !!val;
             const Des: Set<DataEvent> = DataEvent.DEs;
@@ -98,8 +99,8 @@ export class BindBase extends Component {
                 try {
                     val = evalfunc.call(vm, vm, valueStr, undefined, vm.___$tempHelp___);
                 } catch (e) {
-                    console.log(vm);
-                    throw new Error(`解析binds表达式"${t}"中求值"${valueStr}"出现错误`);
+                    console.log(`%c解析binds表达式"${t}"中求值"${valueStr}"出现错误`, 'color: red;');
+                    throw e;
                 }
                 const Des: Set<DataEvent> = DataEvent.DEs;
                 this.callDeBinds = this.callDeBinds || new Set();//设置收集解除绑定集合
@@ -113,7 +114,8 @@ export class BindBase extends Component {
                 try {
                     evalfunc.call(this, _components, attrStr + "=", val);
                 } catch (e) {
-                    throw new Error(`解析binds表达式"${t}"中属性"${attrStr}"出现错误`);
+                    console.log(`%c解析binds表达式"${t}"中属性"${attrStr}"出现错误`, 'color: red;');
+                    throw e;
                 }
             }
             this.callExcBinds.add(setdata);
@@ -155,7 +157,8 @@ export class BindBase extends Component {
                 try {
                     val = evalfunc.call(vm, vm, valueStr);
                 } catch (e) {
-                    throw new Error(`解析event表达式"${exp}"中属性"${valueStr}"出现错误`);
+                    console.log(`%c解析event表达式"${exp}"中属性"${valueStr}"出现错误`, 'color: red;');
+                    throw e;
                 }
                 if (val && val instanceof Function) {
                     val.call(vm, ...p);
