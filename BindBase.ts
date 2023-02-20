@@ -76,7 +76,16 @@ export class BindBase extends Component {
         this.callExcBinds = this.callExcBinds || new Set();//设置收集解除绑定集合
         const vm: VmComponent = this.getVm();//获取数据源组件
         if (!vm) return;
-        const _components = this.getMynodeComponents();
+        let _components = this.getMynodeComponents();
+        (() => {
+            const ritem: any = _components["NewComponent"];
+            if (!ritem || !(ritem instanceof Component) || !ritem.name) return;
+            const name = (ritem.name.split("<")[1] || "").split(">")[0];
+            if (!name || name === "NewComponent") return;
+            _components = Object.assign({}, _components);
+            delete _components["NewComponent"];
+            _components[name] = ritem;
+        })()
         this.binds.forEach(t => {
             const exps = getExpressionAry(t);
             if (!exps) return;
