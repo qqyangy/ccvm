@@ -1,9 +1,9 @@
 import { _decorator, Component, Node, EventTarget, CCString } from 'cc';
-import { execVmOptions, VmOptions } from './initOptions';
+import { execVmOptions, VmOptions as VmOptions2 } from './initOptions';
 import { DataEvent } from './DataEvent';
 const { ccclass, property } = _decorator;
 
-export { type VmOptions };
+export type VmOptions = VmOptions2;
 @ccclass("VmComponent")
 export class VmComponent extends Component {
     @property(Boolean)
