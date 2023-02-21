@@ -4,14 +4,14 @@ const mapDelFuncs = {
     0: (node: Node) => {
         node.active = false;
     },
-    1: (node: Node, saveContainer: { [key: string]: Node }) => {
+    1: (node: Node, pNode: Node, saveContainer: { [key: string]: Node }) => {
         saveContainer[node.name] = node;
-        node.parent && node.parent.removeChild(node);
+        node.parent && pNode === node.parent && node.parent.removeChild(node);
     },
-    3: (node: Node, saveContainer: { [key: string]: Node }) => {
-        node.parent && node.parent.removeChild(node);
+    2: (node: Node, pNode: Node, saveContainer: { [key: string]: Node }) => {
+        node.parent && pNode === node.parent && node.parent.removeChild(node);
         saveContainer[node.name] && delete saveContainer[node.name];
-        node.destroy();
+        // node.destroy();
     }
 }
 //获取指定路由hash段
@@ -21,14 +21,21 @@ const getCurrentHashString = (RouterName: string): string => {
     const mRouter = reg.exec(location.hash);
     return mRouter ? mRouter[0].replace("#", "") : null;
 },
-    setUrl = (RouterName: string, routeName: string, urlData?: {}) => {
+    //预算url
+    computeUrl = (RouterName: string, routeName: string, urlData?: {}) => {
+        const search = !urlData ? "" : Object.keys(urlData).reduce((r, k) => {
+            const v = encodeURIComponent((_v => typeof _v === "string" ? _v : JSON.stringify(_v))(urlData[k]));
+            return `${r}&${k}=${v}`;
+        }, "");
+        const _RouterName = RouterName.replace("-", "\\-"),
+            reg = new RegExp(`^#?$|#${_RouterName}[^#]*|$`),
+            execrusult = reg.exec(location.hash);
+        return { current: execrusult ? execrusult[0] : "", next: `#${RouterName}?${routeName}${search}` };
+    },
+    setUrl = (RouterName: string, compUrl: string) => {
         const _RouterName = RouterName.replace("-", "\\-");
-        const reg = new RegExp(`^#?$|#${_RouterName}[^#]*|$`),
-            search = !urlData ? "" : Object.keys(urlData).reduce((r, k) => {
-                const v = encodeURIComponent((_v => typeof _v === "string" ? _v : JSON.stringify(_v))(urlData[k]));
-                return `${r}&${k}=${v}`;
-            }, "");
-        location.hash = location.hash.replace(reg, `#${RouterName}?${routeName}${search}`);
+        const reg = new RegExp(`^#?$|#${_RouterName}[^#]*|$`);
+        location.hash = location.hash.replace(reg, compUrl);
     },
     getUrl = (RouterName: string) => {
         const mRouterStr = getCurrentHashString(RouterName);
@@ -105,6 +112,9 @@ export class Router {
     public static getRouter(routeName: string): Router {
         return this.RouterBaseInstantiate[routeName] || null;
     }
+    public static delRouter(routerName: string) {
+        this.getRouter(routerName) && delete Router.RouterBaseInstantiate[routerName];
+    }
     public static getRouteData(target: Component | Node) {
         if (!target) return null;
         if (target instanceof Component) {
@@ -169,7 +179,7 @@ export class Router {
             })
         } else {
             this.node.children.forEach((rtNode: Node) => {
-                rtNode instanceof Node && rtNode.name && delFunc(rtNode, this.removeRouts);
+                rtNode instanceof Node && rtNode.name && delFunc(rtNode, this.node, this.removeRouts);
             })
         }
         return this;
@@ -179,8 +189,11 @@ export class Router {
         return !this.mapLocation || !getUrl(this.routerName) ? this.add(routeName, urlData, routeData) : this;
     }
     add(routeName: string, urlData?: {}, routeData?: {}, added?: Function, isGo?: boolean): Router {
+        // if(Router)
+        const { current, next } = computeUrl(this.routerName, routeName, urlData);//预算url
         let routeNode: Node = this.node.getChildByName(routeName);
         const noAddChild: boolean = !!routeNode;
+        if (current === next && noAddChild && routeNode.active === true) return;//不需要处理
         if (!routeNode) {
             routeNode = this.removeRouts[routeName] || (this.routers[routeName] && instantiate(this.routers[routeName]));
         }
@@ -201,7 +214,7 @@ export class Router {
             }
             this.cRouteName = routeName;
             if (this.mapLocation) {
-                setUrl(this.routerName, routeName, urlData)
+                setUrl(this.routerName, next)
                 // sessionStorage.setItem(`__ccRouter_${this.routerName}.${routeName}`, JSON.stringify(routeData));
                 const hashkey = getSessionkey(this.routerName);
                 this.cHashStr = getCurrentHashString(this.routerName) || "";
