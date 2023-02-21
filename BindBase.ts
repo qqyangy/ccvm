@@ -76,16 +76,21 @@ export class BindBase extends Component {
         this.callExcBinds = this.callExcBinds || new Set();//设置收集解除绑定集合
         const vm: VmComponent = this.getVm();//获取数据源组件
         if (!vm) return;
-        let _components = this.getMynodeComponents();
-        (() => {
-            const ritem: any = _components["NewComponent"];
-            if (!ritem || !(ritem instanceof Component) || !ritem.name) return;
-            const name = (ritem.name.split("<")[1] || "").split(">")[0];
-            if (!name || name === "NewComponent") return;
-            _components = Object.assign({}, _components);
-            delete _components["NewComponent"];
-            _components[name] = ritem;
-        })()
+        const _components_ = this.node["_components"] || {},
+            _components = Object.keys(_components_).reduce((r, k) => {
+                const ritem: any = _components_[k],
+                    isComp: boolean = (ritem instanceof Component) && !!ritem.name,
+                    key = (() => {
+                        if (!isComp || (!ritem.name && !ritem._name)) return k;
+                        if (ritem._name) return ritem._name;
+                        const cname: string = ritem.name;
+                        if (cname) {
+                            return cname.indexOf("<") != -1 ? (cname.split("<")[1] || "").split(">")[0] || k : cname
+                        }
+                        return k;
+                    })();
+                return r[key] = ritem, r;
+            }, {});
         this.binds.forEach(t => {
             const exps = getExpressionAry(t);
             if (!exps) return;

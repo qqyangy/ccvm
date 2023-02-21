@@ -17,18 +17,23 @@ export class VmComponent extends Component {
     public ___$tempHelp___: {};
     constructor(...p) {
         super(...p);
-        if (this._$vmOptions) return;
-        Object.defineProperty(this, "vmOptions", {
-            get: () => {
-                return this._$vmOptions;
-            },
-            set: (opt: VmOptions) => {
-                if (!this._$vmOptions && opt) {
-                    this._$vmOptions = opt;
-                    execVmOptions(opt, this);//关联vm
+        this._$vmOptions = this["vmOptions"];
+        if (!this._$vmOptions) {
+            Object.defineProperty(this, "vmOptions", {
+                get: () => {
+                    return this._$vmOptions;
+                },
+                set: (opt: VmOptions) => {
+                    if (!this._$vmOptions && opt) {
+                        this._$vmOptions = opt;
+                        console.log(opt, ">>>>>>>>>>>>>>");
+                        execVmOptions(opt, this);//关联vm
+                    }
                 }
-            }
-        })
+            })
+        } else {
+            execVmOptions(this._$vmOptions, this);
+        }
     }
 }
 
