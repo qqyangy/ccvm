@@ -86,6 +86,7 @@ const getCurrentHashString = (RouterName: string): string => {
         if (hashChange["isHashChange"]) return;
         hashChange["isHashChange"] = true;
         window.addEventListener("hashchange", () => {
+            if (Router.__nochange__) return;
             getHashToRouterName().forEach((rt: string[]) => {
                 const mName: string = rt[0];
                 jumpRouter(mName);
@@ -112,8 +113,12 @@ export class Router {
     public static getRouter(routeName: string): Router {
         return this.RouterBaseInstantiate[routeName] || null;
     }
+    public static __nochange__: boolean = false;
     public static delRouter(routerName: string) {
         this.getRouter(routerName) && delete Router.RouterBaseInstantiate[routerName];
+        this.__nochange__ = true;
+        setUrl(routerName, "");
+        this.__nochange__ = false;
     }
     public static getRouteData(target: Component | Node) {
         if (!target) return null;
