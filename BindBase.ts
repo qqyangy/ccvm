@@ -124,7 +124,7 @@ export class BindBase extends Component {
                     evalfunc.call(this, _components, attrStr + "=", val);
                 } catch (e) {
                     console.log(`%c解析binds表达式"${t}"中属性"${attrStr}"出现错误`, 'color: red;');
-                    throw e;
+                    // throw e;
                 }
             }
             this.callExcBinds.add(setdata);

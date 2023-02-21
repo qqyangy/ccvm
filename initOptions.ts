@@ -1,5 +1,10 @@
 import { DataEvent, listenerDEs, oldDEs, recoveryDEs } from "./DataEvent";
 import { VmComponent } from "./VmComponent";
+
+const types = ["[object String]", "[object Number]", "[object Boolean]"];
+const validValue = (n, o) => {
+    return n === o && types.indexOf(Object.prototype.toString.call(n)) !== -1;
+}
 export interface VmOptions {
     data?: {} | string[],
     props?: {} | string[],
@@ -45,6 +50,7 @@ const recursionWatch = (par: recursparmas) => {
             set(v: any) {
                 const oval = data[k];
                 if (oval !== v) data[k] = v;
+                if (validValue(v, oval)) return;
                 DE.$vmMultipleBindUpdate(_key, v, oval);
             }
         }
@@ -131,6 +137,7 @@ const formatDataRoProps = (data: any, target: any) => {
                     set(v: any) {
                         const oval = computedval[k];
                         computedval[k] = v;
+                        if (validValue(v, oval)) return;
                         DE.$vmMultipleBindUpdate(k, v, oval);
                     }
                 }
