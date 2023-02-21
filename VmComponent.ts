@@ -26,7 +26,6 @@ export class VmComponent extends Component {
                 set: (opt: VmOptions) => {
                     if (!this._$vmOptions && opt) {
                         this._$vmOptions = opt;
-                        console.log(opt, ">>>>>>>>>>>>>>");
                         execVmOptions(opt, this);//关联vm
                     }
                 }
