@@ -43,7 +43,7 @@ export class DataEvent extends EventTarget {
             this._$vmMultipleBindUpdates = new Set();
             this._$vmMultipleBindUpdateValues = {};//存储value
             Promise.resolve().then(() => {
-                const eventkeys: string[] = [...this._$vmMultipleBindUpdates].map(k => Object.prototype.toString.call(k) === "[object String]" ? k : Array.from(k)[0]);
+                const eventkeys: string[] = Array.from(this._$vmMultipleBindUpdates);
                 this._$vmMultipleBindUpdates = null;
                 this.emit("bindUpdate", eventkeys, this._$vmMultipleBindUpdateValues);
             });
