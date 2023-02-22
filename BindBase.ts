@@ -56,10 +56,10 @@ export class BindBase extends Component {
             DataEvent.DEs = new Set();
             let val;
             try {
-                val = evalfunc.call(vm, vm, valueStr, undefined, vm.___$tempHelp___);
+                val = evalfunc.call(vm, false, vm, valueStr, undefined, vm.___$tempHelp___);
             } catch (e) {
                 console.log(`%c解析bindActive表达式求值"${valueStr}"出现错误`, 'color: red;');
-                throw e;
+                // throw e;
             }
             this.node.active = !!val;
             const Des: Set<DataEvent> = DataEvent.DEs;
@@ -111,10 +111,10 @@ export class BindBase extends Component {
                 DataEvent.DEs = new Set();
                 let val;
                 try {
-                    val = evalfunc.call(vm, vm, valueStr, undefined, vm.___$tempHelp___);
+                    val = evalfunc.call(vm, false, vm, valueStr, undefined, vm.___$tempHelp___);
                 } catch (e) {
                     console.log(`%c解析binds表达式"${t}"中求值"${valueStr}"出现错误`, 'color: red;');
-                    throw e;
+                    // throw e;
                 }
                 const Des: Set<DataEvent> = DataEvent.DEs;
                 this.callDeBinds = this.callDeBinds || new Set();//设置收集解除绑定集合
@@ -126,7 +126,7 @@ export class BindBase extends Component {
                 DataEvent.DEs = recoveryDEs(oDEs);//处理完成后恢复之前状态
                 listenerOff && this.callDeBinds.add(listenerOff);//添加解除绑定函数
                 try {
-                    evalfunc.call(this, _components, attrStr + "=", val);
+                    evalfunc.call(this, true, _components, attrStr + "=", val);
                 } catch (e) {
                     console.log(`%c解析binds表达式"${t}"中属性"${attrStr}"出现错误`, 'color: red;');
                     // throw e;
@@ -169,10 +169,10 @@ export class BindBase extends Component {
             this.node.on(attrStr, (...p) => {
                 let val;
                 try {
-                    val = evalfunc.call(vm, vm, valueStr);
+                    val = evalfunc.call(vm, false, vm, valueStr);
                 } catch (e) {
                     console.log(`%c解析event表达式"${exp}"中属性"${valueStr}"出现错误`, 'color: red;');
-                    throw e;
+                    // throw e;
                 }
                 if (val && val instanceof Function) {
                     val.call(vm, ...p);

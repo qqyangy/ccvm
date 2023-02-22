@@ -1,8 +1,5 @@
-const evalfuncsring = `function ____evalfunc____(optins,code,_____data_____,____tempHelp____){
-                var ____code____=code;
-                if(_____data_____!==undefined && code.charAt(code.length-1)==="="){
-                    ____code____=code+"_____data_____";
-                }
+const evalfuncsring = `function ____evalfunc____(isAttr,optins,code,_____data_____,____tempHelp____){
+                var ____code____=isAttr?code+"_____data_____":code;
                 ____tempHelp____=____tempHelp____||{};
                 with (____tempHelp____){
                     with (optins) {
@@ -12,14 +9,14 @@ const evalfuncsring = `function ____evalfunc____(optins,code,_____data_____,____
             }
             document.head.removeChild(document.getElementById("____evalfuncdom_____"));
             `
-function evalfunc(optins: any, code: any, _____data_____: any, tempHelp: {}) {
+function evalfunc(isAttr: boolean, optins: any, code: any, _____data_____: any, tempHelp: {}) {
     if (!window["____evalfunc____"]) {
         const script = document.createElement("script");
         script.id = "____evalfuncdom_____";
         document.head.appendChild(script);
         script.innerHTML = evalfuncsring;
     }
-    return window["____evalfunc____"].call(this, optins, code, _____data_____, tempHelp);
+    return window["____evalfunc____"].call(this, isAttr, optins, code, _____data_____, tempHelp);
 }
 function getExpressionAry(exp: string): { attrStr: string, valueStr: string } {
     const expv = exp && exp.trim();
