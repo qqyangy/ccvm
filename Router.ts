@@ -173,7 +173,7 @@ export class Router {
 
     constructor(option: RouterOptions) {
         if (Router.RouterBaseInstantiate[option.routerName]) {
-            throw new Error(`存在相同的routeName:${option.routerName}`);
+            throw new Error(`Same routeName:${option.routerName}`);
         }
         this.routerName = option.routerName;
         Router.RouterBaseInstantiate[option.routerName] = this;
@@ -191,8 +191,10 @@ export class Router {
         window["_ccRouter"] = Router;
     }
     push(routeName: string, urlData?: {}, routeData?: {}, deletType?: number): Router {
-        return this.add(routeName, urlData, routeData, () => {
-            this.del(deletType);
+        return this.add(routeName, urlData, routeData, {
+            added: () => {
+                this.del(deletType);
+            }
         });
     }
     del(deletType?: number, routeNames?: string[]): Router {
@@ -215,7 +217,18 @@ export class Router {
     default(routeName: string, urlData?: {}, routeData?: {}) {
         return !this.mapLocation || !getUrl(this.routerName) ? this.add(routeName, urlData, routeData) : this;
     }
-    add(routeName: string, urlData?: {}, routeData?: {}, added?: Function, isGo?: boolean): Router {
+    //切换路由但不产生历史记录
+    change(routeName: string, urlData?: {}, routeData?: {}, deletType?: number) {
+        this.add(routeName, urlData, routeData, {
+            isChange: true,
+            added: () => {
+                this.del(deletType);
+            }
+        });
+    }
+    add(routeName: string, urlData?: {}, routeData?: {}, optins?: { added?: Function, isGo?: boolean, isChange?: boolean }): Router {
+        const opt = optins || {},
+            { added, isGo, isChange } = opt;
         // if(Router)
         const { current, next } = computeUrl(this.routerName, routeName, urlData);//预算url
         let routeNode: Node = this.node.getChildByName(routeName);
@@ -241,7 +254,7 @@ export class Router {
             }
             this.cRouteName = routeName;
             if (this.mapLocation) {
-                setUrl(this.routerName, next, next && !getChildRouter(this.routerName));
+                setUrl(this.routerName, next, isChange || next && !getChildRouter(this.routerName));
                 const hashkey = getSessionkey(this.routerName);
                 this.cHashStr = getCurrentHashString(this.routerName) || "";
                 hashkey && sessionStorage.setItem(hashkey, JSON.stringify(routeData || null));
@@ -255,10 +268,12 @@ export class Router {
         if (this.history.length < 1) return;
         const historyIndex = Math.min(Math.max(this.historyIndex + step, 1), this.history.length),
             routeName = this.history[historyIndex - 1];
-        return this.add(routeName, null, null, () => {
-            this.historyIndex = historyIndex;
-            this.del();
-        }, true);
+        return this.add(routeName, null, null, {
+            added: () => {
+                this.historyIndex = historyIndex;
+                this.del();
+            }, isGo: true
+        });
     }
     back() {
         return this.go(-1);
