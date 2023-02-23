@@ -21,6 +21,12 @@ const getCurrentHashString = (RouterName: string): string => {
     const mRouter = reg.exec(location.hash);
     return mRouter ? mRouter[0].replace("#", "") : null;
 },
+    //获取子路由名称
+    getChildRouter = (RouterName: string): string => {
+        const prouter = getCurrentHashString(RouterName);
+        if (!prouter || prouter.indexOf("?") === -1) return "";
+        return prouter.split("?")[1].split("&")[0];
+    },
     //预算url
     computeUrl = (RouterName: string, routeName: string, urlData?: {}) => {
         const search = !urlData ? "" : Object.keys(urlData).reduce((r, k) => {
@@ -32,10 +38,15 @@ const getCurrentHashString = (RouterName: string): string => {
             execrusult = reg.exec(location.hash);
         return { current: execrusult ? execrusult[0] : "", next: `#${RouterName}?${routeName}${search}` };
     },
-    setUrl = (RouterName: string, compUrl: string) => {
+    setUrl = (RouterName: string, compUrl: string, nohistory?: boolean) => {
         const _RouterName = RouterName.replace("-", "\\-");
         const reg = new RegExp(`^#?$|#${_RouterName}[^#]*|$`);
-        location.hash = location.hash.replace(reg, compUrl);
+        const nhash = location.hash.replace(reg, compUrl);//新hash
+        if (!nohistory) {
+            location.hash = nhash;//需要产生历史记录时
+        } else {
+            history.replaceState(null, null, location.hash ? location.href.replace(location.hash, nhash) : location.href + nhash);//不需要产生历史记录时
+        }
     },
     getUrl = (RouterName: string) => {
         const mRouterStr = getCurrentHashString(RouterName);
@@ -116,9 +127,7 @@ export class Router {
     public static __nochange__: boolean = false;
     public static delRouter(routerName: string) {
         this.getRouter(routerName) && delete Router.RouterBaseInstantiate[routerName];
-        this.__nochange__ = true;
         setUrl(routerName, "");
-        this.__nochange__ = false;
     }
     public static getRouteData(target: Component | Node) {
         if (!target) return null;
@@ -150,6 +159,18 @@ export class Router {
     cRouteName: string;//当前路由名称
     cHashStr: string;//当前路由hash段
 
+    //对容器节点的事件监听
+    nodeEvent(node: Node) {
+        const activechange = () => {
+            Router.delRouter(this.routerName);
+        }
+        node.on(Node.EventType.ACTIVE_IN_HIERARCHY_CHANGED, activechange);//节点激活状态
+        node.once(Node.EventType.NODE_DESTROYED, () => {
+            node.off(Node.EventType.ACTIVE_IN_HIERARCHY_CHANGED, activechange);
+            Router.delRouter(this.routerName);
+        })
+    }
+
     constructor(option: RouterOptions) {
         if (Router.RouterBaseInstantiate[option.routerName]) {
             throw new Error(`存在相同的routeName:${option.routerName}`);
@@ -157,6 +178,7 @@ export class Router {
         this.routerName = option.routerName;
         Router.RouterBaseInstantiate[option.routerName] = this;
         this.node = option.routerViewNode;
+        this.nodeEvent(option.routerViewNode);
         this.routers = option.routerConfig || {};
         this.deletType = option.deletType || 0;
         this.noRemoves = option.noRemoves || [];
@@ -219,8 +241,7 @@ export class Router {
             }
             this.cRouteName = routeName;
             if (this.mapLocation) {
-                setUrl(this.routerName, next)
-                // sessionStorage.setItem(`__ccRouter_${this.routerName}.${routeName}`, JSON.stringify(routeData));
+                setUrl(this.routerName, next, next && !getChildRouter(this.routerName));
                 const hashkey = getSessionkey(this.routerName);
                 this.cHashStr = getCurrentHashString(this.routerName) || "";
                 hashkey && sessionStorage.setItem(hashkey, JSON.stringify(routeData || null));
