@@ -15,11 +15,12 @@ export enum VmExpandEvent {
     OVER = "vm-over",
     LONG = "vm-long"
 }
+export const VmEventTypeAll = Object.assign({}, VmEventType, VmExpandEvent);
 let RootNode: Node;
 const expandkeys: string[] = Object.keys(VmExpandEvent).map(t => t.toLowerCase());
 @ccclass('VmEvent')
 export class VmEvent extends Component {
-    public static clickTime = 300;
+    public static clickTime = 500;
     public static longTime = 1000;
     public static moveDistance = 5;
 

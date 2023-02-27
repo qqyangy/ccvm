@@ -2,6 +2,7 @@ import { _decorator, Component, Node, CCString } from 'cc';
 import { VmComponent, VmOptions } from './VmComponent';
 import { DataEvent, listenerDEs, oldDEs, recoveryDEs } from './DataEvent';
 import tools from './tools';
+import { VmEventTypeAll } from './VmEvent';
 const { evalfunc, getExpressionAry } = tools;
 const { ccclass, property } = _decorator;
 
@@ -166,7 +167,13 @@ export class BindBase extends Component {
             const exps = getExpressionAry(exp);
             if (!exps) return;
             const { attrStr, valueStr } = exps;
-            this.node.on(attrStr, (...p) => {
+            let eventAttr: string = attrStr;
+            if (attrStr.charAt(0) === "@") {
+                const typeStr: string = VmEventTypeAll[attrStr.substring(1, attrStr.length).toUpperCase()];
+                eventAttr = typeStr || eventAttr; //拓展事件名称
+            }
+            // VmEventTypeAll
+            this.node.on(eventAttr, (...p) => {
                 let val;
                 try {
                     val = evalfunc.call(vm, false, vm, valueStr);
