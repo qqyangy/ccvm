@@ -10,3 +10,6 @@
 "ccvm/VmEvent.ts" //拓展事件与绑定事件类关联简称，拓展点击click、长按long、离开over 简写start、end、move、cancel
 "ccvm/Router.ts" //配置项目路由
 ```
+
+- @click.2
+
