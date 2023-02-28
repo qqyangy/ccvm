@@ -31,6 +31,9 @@ export class VmEvent extends Component {
 
     startTime: number = 0;//手指按下时的时间
     overStartTime: number = 0;
+    includes(type: string): boolean {
+        return this.eventNames.indexOf(type) !== -1;
+    }
     getRootNode(node?: Node): Node {
         const _node = node || this.node;
         return RootNode = RootNode || (_node.parent ? this.getRootNode(_node.parent) : _node);
@@ -43,25 +46,27 @@ export class VmEvent extends Component {
     startEvent(e: EventTouch) {
         if (this.disable) return;
         this.startTime = Date.now();
-        if (this.eventNames.indexOf("OVER")) {
+        if (this.includes("OVER")) {
             this.overStartTime = this.startTime;//如果有over事件
         }
-        this.unscheduleAllCallbacks();
-        this.scheduleOnce(() => this.longEvent(e), Math.max(VmEvent.longTime, VmEvent.clickTime + 100) / 1000);
+        if (this.includes("LONG")) {
+            this.unscheduleAllCallbacks();
+            this.scheduleOnce(() => this.longEvent(e), Math.max(VmEvent.longTime, VmEvent.clickTime + 100) / 1000);
+        }
     }
     //结算事件处理函数
     endEvent(e: EventTouch) {
         this.overEvent(e, "end");//触发over
         if (!this.startTime) return;
         const now = Date.now();
-        if (now - this.startTime < VmEvent.clickTime) {
+        if (this.includes("CLICK") && now - this.startTime < VmEvent.clickTime) {
             this.emit(VmExpandEvent.CLICK, e);
         }
         this.startTime = 0;
     }
     //长按事件处理函数
     longEvent(e: EventTouch) {
-        if (this.startTime) {
+        if (this.startTime && this.includes("LONG")) {
             this.emit(VmExpandEvent.LONG, e);
             this.startTime = 0;
         }
