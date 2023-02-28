@@ -2,7 +2,7 @@ import { _decorator, Component, Node, CCString } from 'cc';
 import { VmComponent, VmOptions } from './VmComponent';
 import { DataEvent, listenerDEs, oldDEs, recoveryDEs } from './DataEvent';
 import tools from './tools';
-import { VmEvent, VmEventTypeAll } from './VmEvent';
+import { VmEvent, VmExpandEvent, VmEventTypeAll } from './VmEvent';
 const { evalfunc, getExpressionAry } = tools;
 const { ccclass, property } = _decorator;
 
@@ -170,10 +170,11 @@ export class BindBase extends Component {
             const { attrStr, valueStr } = exps;
             let eventAttr: string = attrStr, veType: string;
             if (attrStr.charAt(0) === "@") {
-                veType = attrStr.substring(1, attrStr.length);
-                const typeStr: string = VmEventTypeAll[veType.toUpperCase()];
+                veType = attrStr.substring(1, attrStr.length).toUpperCase();
+                const typeStr: string = VmEventTypeAll[veType];
                 eventAttr = typeStr || eventAttr; //拓展事件名称
-                if (typeStr) {
+                veType = VmExpandEvent[veType] && veType || "";
+                if (typeStr && veType) {
                     if (!this.node.getComponent(VmEvent)) {
                         _VmEvent = this.node.addComponent(VmEvent);//获取VmEvent组件
                     }
