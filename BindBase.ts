@@ -168,9 +168,12 @@ export class BindBase extends Component {
             const exps = getExpressionAry(exp);
             if (!exps) return;
             const { attrStr, valueStr } = exps;
-            let eventAttr: string = attrStr, veType: string;
-            if (attrStr.charAt(0) === "@") {
-                veType = attrStr.substring(1, attrStr.length).toUpperCase();
+            const attrStrAry: string[] = attrStr.split(".").map(t => t.trim()).filter(t => t),
+                eventName = attrStrAry[0], eventCount = parseInt(attrStrAry[1] || "0");
+            let eventAttr: string = eventName, veType: string;
+
+            if (eventName.charAt(0) === "@") {
+                veType = eventName.substring(1, eventName.length).toUpperCase();
                 const typeStr: string = VmEventTypeAll[veType];
                 eventAttr = typeStr || eventAttr; //拓展事件名称
                 veType = VmExpandEvent[veType] && veType || "";
@@ -180,8 +183,8 @@ export class BindBase extends Component {
                     }
                 }
             }
-            // VmEventTypeAll
-            this.node.on(eventAttr, (...p) => {
+            let emitCount: number = 0; //事件触发计数
+            const _eventHandler = (...p) => {
                 let val;
                 try {
                     val = evalfunc.call(vm, false, vm, valueStr);
@@ -192,7 +195,12 @@ export class BindBase extends Component {
                 if (val && val instanceof Function) {
                     val.call(vm, ...p);
                 }
-            })
+                if (eventCount) {
+                    ++emitCount >= eventCount && this.node.off(eventAttr, _eventHandler); //需要处理eventCount时
+                }
+            }
+            // VmEventTypeAll
+            this.node.on(eventAttr, _eventHandler);
             return veType;
         }).filter(t => t).join(",");
         if (_VmEvent && vmEventCfg) {
