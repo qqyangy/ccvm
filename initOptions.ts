@@ -37,6 +37,7 @@ const recursionWatch = (par: recursparmas) => {
     const options: {} = Object.keys(data).reduce((r: Object, k: string) => {
         const _key: string = key ? `${key}.${k}` : k;
         r[k] = {
+            enumerable: true,
             get() {
                 if (DataEvent.DEs) {
                     if (!DataEvent.DEs.has(DE)) {
