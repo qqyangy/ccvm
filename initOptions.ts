@@ -14,6 +14,7 @@ export interface VmOptions {
     methods?: { [key: string]: Function },
     computed?: { [key: string]: Function },
     tempHelp?: {},
+    created?: Function,
     onLoad?: Function,
     onEnable?: Function,
     start?: Function,
@@ -186,4 +187,6 @@ export function execVmOptions(optins: VmOptions, target: VmComponent) {
     copyfunction(optins, target);//methods
     setWatch(optins, target);//watch
     target.___$tempHelp___ = optins.tempHelp;
+    const created = optins.created || target["created"];
+    created && created.call(target);//执行created钩子函数
 }
