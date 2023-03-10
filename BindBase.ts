@@ -14,6 +14,22 @@ export class BindBase extends Component {
     @property([String])
     public events: string[] = [];
 
+    //通过代码动态关联绑定关系方法
+    public static join(node: Node, optins: { bindActive?: string, binds?: string[], events?: string[] }) {
+        if (node.getComponent(this)) return;//如果存在对应组件则处理
+        node.addComponent(this);
+        const _components: BindBase = node.getComponent(this);
+        if (optins.bindActive && typeof optins.bindActive === "string") {
+            _components.bindActive = optins.bindActive;
+        }
+        ["binds", "events"].forEach(k => {
+            if (optins[k] && optins[k] instanceof Array && optins[k].length > 0) {
+                _components[k] = optins[k];
+            }
+        })
+    }
+
+
     private callExcBinds: Set<Function>;
     private callDeBinds: Set<Function>;
     private _vm: VmComponent;
