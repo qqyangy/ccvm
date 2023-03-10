@@ -1,5 +1,15 @@
 import { _decorator, Component, Node, instantiate, Prefab } from 'cc';
 export type RouterCfg = { [key: string]: Prefab };
+
+const destroyNode = (node: Node) => {
+    node.children.forEach((cNode: Node) => {
+        destroyNode(cNode);
+    });
+    if (node.parent && node.isValid) {
+        node.parent.removeChild(node);
+        // node.destroy();
+    }
+}
 const mapDelFuncs = {
     0: (node: Node) => {
         node.active = false;
@@ -8,10 +18,9 @@ const mapDelFuncs = {
         saveContainer[node.name] = node;
         node.parent && pNode === node.parent && node.parent.removeChild(node);
     },
-    2: (node: Node, pNode: Node, saveContainer: { [key: string]: Node }) => {
-        node.parent && pNode === node.parent && node.parent.removeChild(node);
+    2: (node: Node, pNode: Node, saveContainer: { [key: string]: Node }, routerName: string) => {
         saveContainer[node.name] && delete saveContainer[node.name];
-        // node.destroy();
+        destroyNode(node);
     }
 }
 //获取指定路由hash段
@@ -126,8 +135,10 @@ export class Router {
     }
     public static __nochange__: boolean = false;
     public static delRouter(routerName: string) {
-        this.getRouter(routerName) && delete Router.RouterBaseInstantiate[routerName];
-        setUrl(routerName, "");
+        if (this.getRouter(routerName)) {
+            delete Router.RouterBaseInstantiate[routerName];
+            setUrl(routerName, "", true);
+        }
     }
     public static getRouteData(target: Component | Node) {
         if (!target) return null;
@@ -161,17 +172,41 @@ export class Router {
 
     //对容器节点的事件监听
     nodeEvent(node: Node) {
+        let timeout;
         const activechange = () => {
-            Router.delRouter(this.routerName);
+            clearTimeout(timeout);
+            timeout = setTimeout(() => {
+                // if (!node.activeInHierarchy && this.cHashStr && location.hash && location.hash.includes(this.cHashStr) && Router.getRouter(this.routerName)) {
+                //     const nhash = location.hash.replace(`#${this.cHashStr}`, "");
+                //     history.replaceState(null, null, location.href.replace(location.hash, nhash));//不需要产生历史记录时
+                // }
+                Router.delRouter(this.routerName);
+            });
         }
-        node.on(Node.EventType.ACTIVE_IN_HIERARCHY_CHANGED, activechange);//节点激活状态
-        node.once(Node.EventType.NODE_DESTROYED, () => {
-            node.off(Node.EventType.ACTIVE_IN_HIERARCHY_CHANGED, activechange);
-            Router.delRouter(this.routerName);
-        })
+        const destroyedchange = () => {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => {
+                if (Router.getRouter(this.routerName)) {
+                    offevent.forEach(fn => fn());
+                    Router.delRouter(this.routerName);
+                }
+            });
+        }
+        let pnode: Node = node;
+        const offevent: Function[] = [];
+        while (pnode && pnode instanceof Node) {
+            pnode.on(Node.EventType.ACTIVE_IN_HIERARCHY_CHANGED, activechange);//节点激活状态
+            offevent.push(() => pnode.off(Node.EventType.ACTIVE_IN_HIERARCHY_CHANGED, activechange));
+            node.once(Node.EventType.NODE_DESTROYED, destroyedchange);
+            pnode = pnode.parent;
+        }
+
     }
 
     constructor(option: RouterOptions) {
+        if (option.routerViewNode && option.routerViewNode["__Router__"]) {
+            return option.routerViewNode["__Router__"];
+        }
         if (Router.RouterBaseInstantiate[option.routerName]) {
             throw new Error(`Same routeName:${option.routerName}`);
         }
@@ -179,6 +214,7 @@ export class Router {
         Router.RouterBaseInstantiate[option.routerName] = this;
         this.node = option.routerViewNode;
         this.nodeEvent(option.routerViewNode);
+        option.routerViewNode["__Router__"] = this;
         this.routers = option.routerConfig || {};
         this.deletType = option.deletType || 0;
         this.noRemoves = option.noRemoves || [];
@@ -198,17 +234,18 @@ export class Router {
         });
     }
     del(deletType?: number, routeNames?: string[]): Router {
+        if (!this.node || !this.node.isValid || !this.node.activeInHierarchy) return;
         const dtype: number = (deletType !== undefined && deletType !== null) ? deletType : this.deletType;
         const delFunc = mapDelFuncs[dtype];
         if (!delFunc) return this;
         if (routeNames) {
             routeNames.forEach(k => {
                 const rtNode: Node = this.node.getChildByName(k);
-                delFunc(rtNode, this.removeRouts);
+                delFunc(rtNode, this.removeRouts, this.routerName);
             })
         } else {
             this.node.children.forEach((rtNode: Node) => {
-                rtNode instanceof Node && rtNode.name && delFunc(rtNode, this.node, this.removeRouts);
+                rtNode instanceof Node && rtNode.name && delFunc(rtNode, this.node, this.removeRouts, this.routerName);
             })
         }
         return this;
@@ -227,6 +264,7 @@ export class Router {
         });
     }
     add(routeName: string, urlData?: {}, routeData?: {}, optins?: { added?: Function, isGo?: boolean, isChange?: boolean }): Router {
+        if (!this.node || !this.node.isValid || !this.node.activeInHierarchy) return;
         const opt = optins || {},
             { added, isGo, isChange } = opt;
         // if(Router)
