@@ -8,13 +8,14 @@ const validValue = (n, o) => {
 export interface VmOptions {
     data?: {} | string[],
     props?: {} | string[],
-    depth?: { [key: string]: number },
+    depth?: { [key: string]: number },//数据观察深度
     watch?: { [key: string]: Function },
-    watchImmediate?: string[],
+    watchImmediate?: string[],//保证初始化立即执行1次
+    watchStartImmediate?: string[],//保证最迟start后至少执行1次
     methods?: { [key: string]: Function },
     computed?: { [key: string]: Function },
-    tempHelp?: {},
-    created?: Function,
+    tempHelp?: {},//附加表达式取值变量集合如从cc中导出的对象
+    created?: Function,//初始化完成执行
     onLoad?: Function,
     onEnable?: Function,
     start?: Function,
@@ -154,7 +155,7 @@ const formatDataRoProps = (data: any, target: any) => {
         }
     },
     //处理watch
-    setWatch = (opt: VmOptions, target: any) => {
+    setWatch = (opt: VmOptions, target: any, watchStartdata: {}, watchStartImmediate: string[]) => {
         if (!opt.watch) return;
         const watch = opt.watch;
         Object.keys(watch).forEach((key: string) => {
@@ -170,22 +171,54 @@ const formatDataRoProps = (data: any, target: any) => {
                 listenerOff && listenerOff();//移除老的监听
                 listenerOff = !Des ? null : listenerDEs(Des, "bindUpdate", getval);
                 DataEvent.DEs = recoveryDEs(oDEs);//处理完成后恢复之前状态
-                !nocall && watchfunc.call(target, val, oldval);
+                if (!nocall) {
+                    watchfunc.call(target, val, oldval);//调用watch
+                    watchfunc["__callCount__"] = (watchfunc["__callCount__"] || 0) + 1;//调用次数
+                    if (watchStartdata[key]) {
+                        delete watchStartdata[key];//已经执行了测删除待执行任务
+                    }
+                } else {
+                    if (watchStartImmediate.indexOf(key) !== -1) {
+                        watchStartdata[key] = getval;//保存执行人物
+                    }
+                }
                 oldval = val;
             }
             getval(!opt.watchImmediate || opt.watchImmediate.indexOf(key) === -1);
         });
+        watchStartImmediate.length > 0 && watchStartImmediate.splice(0, watchStartImmediate.length);//清空数组
+    },
+    //生成需要监听watch的starthook
+    onwatchCreatStart = (opt: VmOptions, watchStartFuncs: {}) => {
+        const watchStartFuncsKeys: string[] = Object.keys(watchStartFuncs);
+        if (watchStartFuncsKeys.length < 0) return;//如果没有则不处理
+        const watchFunc = () => {
+            watchStartFuncsKeys.forEach(fnk => {
+                Promise.resolve().then(() => {
+                    const fn = watchStartFuncs[fnk];
+                    fn && fn();
+                });
+            });//执行
+        }
+        const oldstart = opt.start;
+        opt.start = oldstart ? function start() {
+            oldstart.call(this);
+            watchFunc();
+        } : watchFunc;
     }
 export function execVmOptions(optins: VmOptions, target: VmComponent) {
+    const watchStartFuncs = {},//需要最迟start后执行的watch函数
+        watchStartImmediate = [...(optins.watchStartImmediate || [])];
     target.___$dataEvent___ = new DataEvent();
     optins.data = formatDataRoProps(optins.data, target);
     optins.props = formatDataRoProps(optins.props, target);
     recursionWatch({ data: optins.data, DE: target.___$dataEvent___, target, depthcfg: optins.depth });//data
     recursionWatch({ data: optins.props, DE: target.___$dataEvent___, target });//props
     setComputed(optins, target, target.___$dataEvent___);//computed
+    setWatch(optins, target, watchStartFuncs, watchStartImmediate);//watch
+    onwatchCreatStart(optins, watchStartFuncs);//按照watch时机需求生成start
     resethooks(optins, target);//hooks
-    copyfunction(optins, target);//methods
-    setWatch(optins, target);//watch
+    copyfunction(optins, target);//methods\
     target.___$tempHelp___ = optins.tempHelp;
     const created = optins.created || target["created"];
     created && created.call(target);//执行created钩子函数
