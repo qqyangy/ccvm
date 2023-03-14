@@ -14,6 +14,18 @@ export class BindBase extends Component {
     @property([String])
     public events: string[] = [];
 
+    public forWith: {};//for组件附加域
+    public get forWithdata() {
+        return this.forWith || (this.forWith = ((node, vmNode) => {
+            let pnode: Node = node;
+            if (!node || !vmNode) return;
+            do {
+                if (pnode["__forWith__"]) return pnode["__forWith__"];
+                pnode = pnode.parent;
+            } while (pnode && vmNode !== pnode);
+        })(this.node, this.getVm().node));
+    }
+
     //通过代码动态关联绑定关系方法
     public static join(node: Node, optins: { bindActive?: string, binds?: string[], events?: string[] }) {
         if (node.getComponent(this)) return;//如果存在对应组件则处理
@@ -73,7 +85,7 @@ export class BindBase extends Component {
             DataEvent.DEs = new Set();
             let val;
             try {
-                val = evalfunc.call(vm, false, vm, valueStr, undefined, vm.___$tempHelp___);
+                val = evalfunc.call(vm, this.forWithdata, false, vm, valueStr, undefined, vm.___$tempHelp___);
             } catch (e) {
                 console.log(`%c解析bindActive表达式求值"${valueStr}"出现错误`, 'color: red;');
                 // throw e;
@@ -128,7 +140,7 @@ export class BindBase extends Component {
                 DataEvent.DEs = new Set();
                 let val;
                 try {
-                    val = evalfunc.call(vm, false, vm, valueStr, undefined, vm.___$tempHelp___);
+                    val = evalfunc.call(vm, this.forWithdata, false, vm, valueStr, undefined, vm.___$tempHelp___);
                 } catch (e) {
                     console.log(`%c解析binds表达式"${t}"中求值"${valueStr}"出现错误`, 'color: red;');
                     // throw e;
@@ -143,7 +155,7 @@ export class BindBase extends Component {
                 DataEvent.DEs = recoveryDEs(oDEs);//处理完成后恢复之前状态
                 listenerOff && this.callDeBinds.add(listenerOff);//添加解除绑定函数
                 try {
-                    evalfunc.call(this, true, _components, attrStr + "=", val);
+                    evalfunc.call(this, this.forWithdata, true, _components, attrStr + "=", val);
                 } catch (e) {
                     console.log(`%c解析binds表达式"${t}"中属性"${attrStr}"出现错误`, 'color: red;');
                     // throw e;
@@ -203,7 +215,7 @@ export class BindBase extends Component {
             const _eventHandler = (...p) => {
                 let val;
                 try {
-                    val = evalfunc.call(vm, false, vm, valueStr);
+                    val = evalfunc.call(vm, this.forWithdata, false, vm, valueStr);
                 } catch (e) {
                     console.log(`%c解析event表达式"${exp}"中属性"${valueStr}"出现错误`, 'color: red;');
                     // throw e;
