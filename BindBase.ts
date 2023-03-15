@@ -101,9 +101,15 @@ export class BindBase extends Component {
         }
         setdata();
         if (typeof active_val === "boolean" && this.node) {
+            let _active = this.node.active;
             Object.defineProperty(this.node, "_active", {
-                get() { return active_val; },
-                set() { }
+                get() { return _active; },
+                set: (v) => {
+                    _active = v;
+                    if (_active !== active_val && this.node) {
+                        this.node.active = active_val;
+                    }
+                }
             })
         }
     }
