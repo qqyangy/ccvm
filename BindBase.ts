@@ -80,6 +80,7 @@ export class BindBase extends Component {
         const vm: VmComponent = this.getVm();//获取数据源组件
         if (!vm) return;
         this._$successbindActive = true;
+        let active_val;
         const setdata = () => {
             const oDEs: any = oldDEs();
             DataEvent.DEs = new Set();
@@ -90,7 +91,7 @@ export class BindBase extends Component {
                 console.log(`%c解析bindActive表达式求值"${valueStr}"出现错误`, 'color: red;');
                 // throw e;
             }
-            this.node.active = !!val;
+            this.node.active = active_val = !!val;
             const Des: Set<DataEvent> = DataEvent.DEs;
             if (this._disbindActive) {
                 this._disbindActive();
@@ -99,6 +100,12 @@ export class BindBase extends Component {
             DataEvent.DEs = recoveryDEs(oDEs);//处理完成后恢复之前状态
         }
         setdata();
+        if (typeof active_val === "boolean" && this.node) {
+            Object.defineProperty(this.node, "_active", {
+                get() { return active_val; },
+                set() { }
+            })
+        }
     }
     private bindAttribute() {
         if (!this.binds || this.binds.length < 1) return;
