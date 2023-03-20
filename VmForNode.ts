@@ -10,6 +10,8 @@ export class VmForNode extends VmComponent {
     @property({ type: CCString, visible: false })
     public vmRootName: string;
 
+    @property({ type: Number, tooltip: "复用节点池需要缓存节点的最大数量" })
+    public nodePool: number = 0;
     @property({ type: String, tooltip: "需要被循环数组或对象的名称" })
     public mapdata: string = "";
     @property({ type: String, tooltip: "定义循环中的临时变量名称默认：item,index,key,length" })
@@ -20,6 +22,7 @@ export class VmForNode extends VmComponent {
     start() {
         this.initBInd();
     }
+    nodePoolList: [] = [];//节点池
     accept_mapdata: [] | {};//数据集合
     vmOptions: VmOptions = {
         props: ["accept_mapdata"],
@@ -34,6 +37,10 @@ export class VmForNode extends VmComponent {
         },
         watch: {
             accept_mapdata_keys() {
+                const maxlength = Math.max(this.nodePool - this.nodePoolList.length - this.node.children.length, 0),
+                    childrenLength = this.node.children.length,
+                    children = maxlength >= childrenLength ? this.node.children : this.node.children.slice(0, childrenLength);
+                this.nodePoolList = children.concat(this.nodePoolList);
                 this.node.removeAllChildren();
                 const keys: string[] = this.accept_mapdata_keys;
                 keys.forEach((k, i) => {
@@ -42,10 +49,12 @@ export class VmForNode extends VmComponent {
             }
         }
     };
-
+    instantiateItem(): Node {
+        return this.nodePoolList.length > 0 ? this.nodePoolList.shift() : instantiate(this.itemNode);
+    }
     creatItemNode(item, index, key, length) {
         const attrs = [item, index, key, length];
-        const _itemnode: Node = instantiate(this.itemNode);
+        const _itemnode: Node = this.instantiateItem();
         const _vmNode: VmNode = _itemnode.getComponent(VmNode);
         const forWith = (this.variables || "").split(",").reduce((r, k, i) => {
             if (!k || !k.trim()) return r;
@@ -64,5 +73,8 @@ export class VmForNode extends VmComponent {
         if (!this.itemNode) return;
         this.node.removeAllChildren();
         VmNode.join(this.node, { binds: [`VmForNode.accept_mapdata=${this.mapdata}`] });//创建数组的绑定关系
+    }
+    onDestroy() {
+        this.nodePoolList = [];
     }
 }
