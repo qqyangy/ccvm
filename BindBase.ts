@@ -3,6 +3,7 @@ import { VmComponent, VmOptions } from './VmComponent';
 import { DataEvent, listenerDEs, oldDEs, recoveryDEs } from './DataEvent';
 import tools from './tools';
 import { VmEvent, VmExpandEvent, VmEventTypeAll } from './VmEvent';
+import { nodeSet } from './nodeSet';
 const { evalfunc, getExpressionAry } = tools;
 const { ccclass, property } = _decorator;
 
@@ -118,7 +119,7 @@ export class BindBase extends Component {
         this.callExcBinds = this.callExcBinds || new Set();//设置收集解除绑定集合
         const vm: VmComponent = this.getVm();//获取数据源组件
         if (!vm) return;
-        const _components_ = this.node["_components"] || {},
+        const _components_ = Object.assign({ node: this.node["___$sets___"] }, this.node["_components"] || {}),
             _components = Object.keys(_components_).reduce((r, k) => {
                 const ritem: any = _components_[k],
                     isComp: boolean = (ritem instanceof Component) && !!ritem.name,
@@ -260,6 +261,7 @@ export class BindBase extends Component {
         }
     }
     start() {
+        nodeSet(this.node);
         this.initBindActive(true);
         this.bindAttribute();
         this.bindEvent();
