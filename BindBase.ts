@@ -4,6 +4,7 @@ import { DataEvent, listenerDEs, oldDEs, recoveryDEs } from './DataEvent';
 import tools from './tools';
 import { VmEvent, VmExpandEvent, VmEventTypeAll } from './VmEvent';
 import { nodeSet } from './nodeSet';
+import BindMapKey from './BindMapKey';
 const { evalfunc, getExpressionAry } = tools;
 const { ccclass, property } = _decorator;
 
@@ -135,7 +136,7 @@ export class BindBase extends Component {
                 return r[key] = ritem, r;
             }, {});
         this.binds.forEach(t => {
-            const exps = getExpressionAry(t);
+            const exps = getExpressionAry(BindMapKey.parse(t));
             if (!exps) return;
             const { attrStr, valueStr } = exps;
             /******限定VmComponent组件只能被绑定props --start******/
