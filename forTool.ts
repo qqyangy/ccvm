@@ -5,7 +5,9 @@ export function isForTemplet(node: any, vmNode: any): boolean {
     let pnode: any = node;
     if (!node || !vmNode) return false;
     do {
-        if (!!pnode[forItem] && !(forIndex in pnode)) return true;
+        if (pnode[forItem]) {
+            return !(forIndex in pnode)
+        }
         pnode = pnode.parent;
     } while (pnode && vmNode !== pnode);
     return false;

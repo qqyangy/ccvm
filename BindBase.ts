@@ -24,15 +24,35 @@ export class BindBase extends Component {
 
     //通过代码动态关联绑定关系方法
     public static join(node: Node, optins: { bindActive?: string, binds?: string[], events?: string[] }) {
-        if (node.getComponent(this)) return;//如果存在对应组件则处理
-        node.addComponent(this);
-        const _components: BindBase = node.getComponent(this);
+        let myComponent: BindBase = node.getComponent(this);
+        if (myComponent && !myComponent.enabled) {
+            //存在对应组件并且是非激活状态则移除组件
+            const _comps: any[] = node["_components"];
+            _comps.splice(_comps.indexOf(myComponent), 1);
+            myComponent.destroy();
+            myComponent = null;
+        }
+        let _components: BindBase
+        if (!myComponent) {
+            node.addComponent(this);
+            _components = node.getComponent(this);
+        } else {
+            _components = myComponent;
+        }
         if (optins.bindActive && typeof optins.bindActive === "string") {
             _components.bindActive = optins.bindActive;
         }
         ["binds", "events"].forEach(k => {
             if (optins[k] && optins[k] instanceof Array && optins[k].length > 0) {
-                _components[k] = optins[k];
+                const opk: string[] = optins[k];
+                if (myComponent) {
+                    const oldary: string[] = _components[k] || [],
+                        oset: Set<string> = new Set(oldary);
+                    opk.forEach(k => oset.add(k));
+                    _components[k] = Array.from(oset);
+                } else {
+                    _components[k] = opk;
+                }
             }
         })
     }
@@ -184,6 +204,7 @@ export class BindBase extends Component {
     }
     //获取父及节点中对应VmComponent切具有isVmNode属性的组件
     public getVmNodeComponent(): VmComponent {
+        if (!this.node) return null;
         let parent: Node = this.node.parent;
         while (parent && parent instanceof Node) {
             const vms = this.getVmComponent(parent),

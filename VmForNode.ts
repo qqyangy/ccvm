@@ -21,9 +21,7 @@ export class VmForNode extends VmComponent {
     public variables: string = "";
 
     public itemNode: Node;
-    start() {
-        this.initBInd();
-    }
+    startcall: number = 0;//start调用 1watch调用 2start调用
     nodePoolList: [] = [];//节点池
     accept_mapdata: [] | {};//数据集合
     vmOptions: VmOptions = {
@@ -37,8 +35,15 @@ export class VmForNode extends VmComponent {
                 return this.accept_mapdataformat instanceof Array ? this.accept_mapdataformat.map((v, i) => i) : Object.keys(this.accept_mapdataformat);
             }
         },
-        watch: {
-            accept_mapdata_keys() {
+        start() {
+            this.initBInd();
+            if (this.startcall) {
+                this.execFor();
+            }
+            this.startcall = 2;
+        },
+        methods: {
+            execFor() {
                 const maxlength = Math.max(this.nodePool - this.nodePoolList.length - this.node.children.length, 0),
                     childrenLength = this.node.children.length,
                     children = maxlength >= childrenLength ? this.node.children : this.node.children.slice(0, childrenLength);
@@ -47,7 +52,16 @@ export class VmForNode extends VmComponent {
                 const keys: string[] = this.accept_mapdata_keys;
                 keys.forEach((k, i) => {
                     this.creatItemNode(this.accept_mapdataformat[k], i, k, keys.length);
-                })
+                });
+            }
+        },
+        watch: {
+            accept_mapdata_keys() {
+                if (this.startcall === 2) {
+                    this.execFor();
+                } else {
+                    this.startcall = 1;
+                }
             },
             node(nd: Node) {
                 nd && nd.children.length > 0 && this.nodeloaded(nd);//挂在成功

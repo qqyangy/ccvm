@@ -27,6 +27,10 @@ export default class BindMapKey {
     public configs: Cfg = {
         text: "Label.string",
         src: "Sprite.spriteFrame",
+        width: "UITransform.width",
+        height: "UITransform.height",
+        anchorX: "UITransform.anchorX",
+        anchorY: "UITransform.anchorY",
     };
     public parsekey(exp: string) {
         const _exp = exp.trim();
