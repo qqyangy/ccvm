@@ -5,6 +5,7 @@ import tools from './tools';
 import { VmEvent, VmExpandEvent, VmEventTypeAll } from './VmEvent';
 import { nodeSet } from './nodeSet';
 import BindMapKey from './BindMapKey';
+import { isForTemplet, getForWithdata } from './forTool';
 const { evalfunc, getExpressionAry } = tools;
 const { ccclass, property } = _decorator;
 
@@ -18,14 +19,7 @@ export class BindBase extends Component {
 
     public forWith: {};//for组件附加域
     public get forWithdata() {
-        return this.forWith || (this.forWith = ((node, vmNode) => {
-            let pnode: Node = node;
-            if (!node || !vmNode) return;
-            do {
-                if (pnode["__forWith__"]) return pnode["__forWith__"];
-                pnode = pnode.parent;
-            } while (pnode && vmNode !== pnode);
-        })(this.node, this.getVm().node));
+        return this.forWith || (this.forWith = getForWithdata(this.node, this.getVm().node));
     }
 
     //通过代码动态关联绑定关系方法
@@ -72,15 +66,16 @@ export class BindBase extends Component {
                 },
                 set: (bindstr: string) => {
                     this._$bindActive = bindstr;
-                    Promise.resolve().then(() => {
+                    requestAnimationFrame(() => {
                         this.initBindActive(true);
-                    });
+                    })
                 }
             })
         }
         if (!valueStr) return;
         const vm: VmComponent = this.getVm();//获取数据源组件
         if (!vm) return;
+        if (isForTemplet(this.node, vm.node)) return;
         this._$successbindActive = true;
         let active_val;
         const setdata = () => {
@@ -120,6 +115,7 @@ export class BindBase extends Component {
         this.callExcBinds = this.callExcBinds || new Set();//设置收集解除绑定集合
         const vm: VmComponent = this.getVm();//获取数据源组件
         if (!vm) return;
+        if (isForTemplet(this.node, vm.node)) return;
         const _components_ = Object.assign({ node: this.node["___$sets___"] }, this.node["_components"] || {}),
             _components = Object.keys(_components_).reduce((r, k) => {
                 const ritem: any = _components_[k],
@@ -206,6 +202,7 @@ export class BindBase extends Component {
         if (!this.events || this.events.length < 1) return;
         const vm: VmComponent = this.getVm();//获取数据源组件
         if (!vm) return;
+        if (isForTemplet(this.node, vm.node)) return;
         let _VmEvent: VmEvent;//节点的VmEvent组件
         const vmEventCfg = this.events.map((exp: string) => {
             const exps = getExpressionAry(exp);
