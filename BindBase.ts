@@ -198,6 +198,7 @@ export class BindBase extends Component {
     }
     //获取指定节点对应VmComponent组件
     public getVmComponent(node: Node): VmComponent[] {
+        if (!node) return [];
         return (node["_components"] || []).filter((o) => {
             return o instanceof VmComponent;
         }) as VmComponent[]
