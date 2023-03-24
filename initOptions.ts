@@ -1,5 +1,8 @@
+import { BindBase } from "./BindBase";
 import { DataEvent, listenerDEs, oldDEs, recoveryDEs } from "./DataEvent";
+import { myEventName } from "./keyName";
 import { VmComponent } from "./VmComponent";
+
 
 const types = ["[object String]", "[object Number]", "[object Boolean]"];
 const validValue = (n, o) => {
@@ -16,6 +19,7 @@ export interface VmOptions {
     computed?: { [key: string]: Function },
     tempHelp?: {},//附加表达式取值变量集合如从cc中导出的对象
     created?: Function,//初始化完成执行
+    mounted?: Function,//参数准备就绪执行
     onLoad?: Function,
     onEnable?: Function,
     start?: Function,
@@ -86,7 +90,29 @@ const formatDataRoProps = (data: any, target: any) => {
     resethooks = (opt: VmOptions, target: any) => {
         const newhooks = {},
             oldhooks = {},
-            hookKeys = ["onLoad", "onEnable", "start", "update", "lateUpdate", "onDisable", "onDestroy"]
+            hookKeys = ["onLoad", "onEnable", "start", "update", "lateUpdate", "onDisable", "onDestroy"];
+        if (opt.mounted) {
+            let oldStart;
+            function start() {
+                if (oldStart) oldStart.call(this);
+                this.node.once(myEventName.mounted, () => {
+                    opt.mounted.call(this);
+                });
+                const node = this.node;
+                !(node["_components"] || []).some(c => {
+                    return c instanceof BindBase;
+                }) && Promise.resolve().then(() => {
+                    node.emit(myEventName.mounted);
+                });
+            }
+            [opt, target].find(o => {
+                oldStart = o.start;
+                if (oldStart) {
+                    o.start = start;
+                }
+                return oldStart;
+            }) || (opt.start = start);
+        }
         const innithooks = hookKeys.reduce((r, k) => {
             return (target[k] && (r[k] = target[k])), r;
         }, {});
@@ -217,6 +243,11 @@ export function execVmOptions(optins: VmOptions, target: VmComponent) {
     setComputed(optins, target, target.___$dataEvent___);//computed
     setWatch(optins, target, watchStartFuncs, watchStartImmediate);//watch
     onwatchCreatStart(optins, watchStartFuncs);//按照watch时机需求生成start
+    const mounted = optins.mounted || target["mounted"];
+    if (mounted) {
+        optins.mounted = mounted;//设置mounted钩子
+        target["mounted"] && delete target["mounted"];
+    }
     resethooks(optins, target);//hooks
     copyfunction(optins, target);//methods\
     target.___$tempHelp___ = optins.tempHelp;

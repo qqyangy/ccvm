@@ -6,6 +6,7 @@ import { VmEvent, VmExpandEvent, VmEventTypeAll } from './VmEvent';
 import { nodeSet } from './nodeSet';
 import BindMapKey from './BindMapKey';
 import { isForTemplet, getForWithdata } from './forTool';
+import { myEventName } from './keyName';
 const { evalfunc, getExpressionAry } = tools;
 const { ccclass, property } = _decorator;
 
@@ -285,6 +286,7 @@ export class BindBase extends Component {
         this.initBindActive(true);
         this.bindAttribute();
         this.bindEvent();
+        this.node.emit(myEventName.mounted);//触发mounted事件
     }
     onDisable() {
         this.deBindFunc();
