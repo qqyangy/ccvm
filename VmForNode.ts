@@ -1,5 +1,5 @@
 import { _decorator, Component, Node, EventTarget, CCString, instantiate } from 'cc';
-import forTool from './forTool';
+import forTool from './modules/forTool';
 import { VmComponent, VmOptions } from "./VmComponent";
 import { VmNode } from './VmNode';
 

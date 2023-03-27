@@ -1,6 +1,6 @@
 import { _decorator, Component, Node, EventTarget, CCString } from 'cc';
-import { execVmOptions, VmOptions as VmOptions2 } from './initOptions';
-import { DataEvent } from './DataEvent';
+import { execVmOptions, VmOptions as VmOptions2 } from './modules/initOptions';
+import { DataEvent } from './modules/DataEvent';
 const { ccclass, property } = _decorator;
 
 export type VmOptions = VmOptions2;

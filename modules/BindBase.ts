@@ -1,10 +1,10 @@
 import { _decorator, Component, Node, CCString } from 'cc';
-import { VmComponent, VmOptions } from './VmComponent';
+import { VmComponent, VmOptions } from '../VmComponent';
 import { DataEvent, listenerDEs, oldDEs, recoveryDEs } from './DataEvent';
 import tools from './tools';
-import { VmEvent, VmExpandEvent, VmEventTypeAll } from './VmEvent';
+import { VmEvent, VmExpandEvent, VmEventTypeAll } from '../VmEvent';
 import { nodeSet } from './nodeSet';
-import BindMapKey from './BindMapKey';
+import BindMapKey from '../BindMapKey';
 import { isForTemplet, getForWithdata } from './forTool';
 import { myEventName } from './keyName';
 const { evalfunc, getExpressionAry } = tools;

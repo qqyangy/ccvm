@@ -1,5 +1,5 @@
 import { _decorator } from 'cc';
-import { BindBase } from "./BindBase"
+import { BindBase } from "./modules/BindBase"
 import { VmComponent } from './VmComponent';
 const { ccclass, executionOrder } = _decorator;
 

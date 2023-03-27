@@ -1,7 +1,7 @@
 import { BindBase } from "./BindBase";
 import { DataEvent, listenerDEs, oldDEs, recoveryDEs } from "./DataEvent";
 import { myEventName } from "./keyName";
-import { VmComponent } from "./VmComponent";
+import { VmComponent } from "../VmComponent";
 
 
 const types = ["[object String]", "[object Number]", "[object Boolean]"];
