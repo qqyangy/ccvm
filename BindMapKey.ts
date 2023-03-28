@@ -31,6 +31,13 @@ export default class BindMapKey {
         height: "UITransform.height",
         anchorX: "UITransform.anchorX",
         anchorY: "UITransform.anchorY",
+        x: "node.x",
+        y: "node.y",
+        z: "node.z",
+        scale: "node.scale",
+        scaleX: "node.scaleX",
+        scaleY: "node.scaleY",
+        scaleZ: "node.scaleZ"
     };
     public parsekey(exp: string) {
         const _exp = exp.trim();
