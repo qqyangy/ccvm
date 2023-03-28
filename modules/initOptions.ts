@@ -11,6 +11,7 @@ const validValue = (n, o) => {
 export interface VmOptions {
     data?: {} | string[],
     props?: {} | string[],
+    refs?: {} | string[],
     depth?: { [key: string]: number },//数据观察深度
     watch?: { [key: string]: Function },
     watchImmediate?: string[],//保证初始化立即执行1次
@@ -238,8 +239,10 @@ export function execVmOptions(optins: VmOptions, target: VmComponent) {
     target.___$dataEvent___ = new DataEvent();
     optins.data = formatDataRoProps(optins.data, target);
     optins.props = formatDataRoProps(optins.props, target);
+    optins.refs = formatDataRoProps(optins.refs, target);
     recursionWatch({ data: optins.data, DE: target.___$dataEvent___, target, depthcfg: optins.depth });//data
     recursionWatch({ data: optins.props, DE: target.___$dataEvent___, target });//props
+    recursionWatch({ data: optins.refs, DE: target.___$dataEvent___, target });//refs
     setComputed(optins, target, target.___$dataEvent___);//computed
     setWatch(optins, target, watchStartFuncs, watchStartImmediate);//watch
     onwatchCreatStart(optins, watchStartFuncs);//按照watch时机需求生成start

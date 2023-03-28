@@ -26,11 +26,13 @@ function evalfunc(forWith: {}, isAttr: boolean, optins: any, code: any, _____dat
     }
     return window["____evalfunc____"].call(this, forWith, isAttr, optins, code, _____data_____, tempHelp);
 }
-function getExpressionAry(exp: string): { attrStr: string, valueStr: string } {
+//test：attrStr与valueStr是否均存在  code：0 attrStr与valueStr均没有 1只有 attrStr 2只有valueStr 3都有
+function getExpressionAry(exp: string): { attrStr: string, valueStr: string, test: boolean, code: number } {
     const expv = exp && exp.trim();
     if (!expv) return;
     const attrStr: string = expv.split("=")[0].trim(),
-        valueStr: string = expv.replace(/^[^=]*=/, "").trim();
-    return attrStr && valueStr ? { attrStr, valueStr } : null
+        isvalue = /^[^=]*=/.test(expv),
+        valueStr: string = isvalue ? expv.replace(/^[^=]*=/, "").trim() : "";
+    return { attrStr, valueStr, test: !!(attrStr && valueStr), code: 0 + (attrStr && 1 || 0) + (valueStr && 2 || 0) }
 }
 export default { evalfunc, getExpressionAry }

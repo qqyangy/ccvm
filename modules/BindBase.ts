@@ -132,13 +132,9 @@ export class BindBase extends Component {
             })
         }
     }
-    private bindAttribute() {
-        if (!this.binds || this.binds.length < 1) return;
-        this.callExcBinds = this.callExcBinds || new Set();//设置收集解除绑定集合
-        const vm: VmComponent = this.getVm();//获取数据源组件
-        if (!vm) return;
-        if (isForTemplet(this.node, vm.node)) return;
-        const _components_ = Object.assign({ node: this.node["___$sets___"] }, this.node["_components"] || {}),
+    //获取正确组件集合
+    public getComponentFormat(node?: any) {
+        const _components_ = this.node["_components"] || {},
             _components = Object.keys(_components_).reduce((r, k) => {
                 const ritem: any = _components_[k],
                     isComp: boolean = (ritem instanceof Component) && !!ritem.name,
@@ -153,9 +149,18 @@ export class BindBase extends Component {
                     })();
                 return r[key] = ritem, r;
             }, {});
+        return Object.assign({ node: node || this.node }, _components);
+    }
+    private bindAttribute() {
+        if (!this.binds || this.binds.length < 1) return;
+        this.callExcBinds = this.callExcBinds || new Set();//设置收集解除绑定集合
+        const vm: VmComponent = this.getVm();//获取数据源组件
+        if (!vm) return;
+        if (isForTemplet(this.node, vm.node)) return;
+        const _components = this.getComponentFormat(this.node["___$sets___"]);
         this.binds.forEach(t => {
             const exps = getExpressionAry(BindMapKey.parse(t));
-            if (!exps) return;
+            if (!exps.test) return;
             const { attrStr, valueStr } = exps;
             /******限定VmComponent组件只能被绑定props --start******/
             const attrStrA = attrStr.split(".").map(t => t.trim()).filter(t => t),//获取被赋值表达式数组形式
@@ -232,7 +237,7 @@ export class BindBase extends Component {
         let _VmEvent: VmEvent;//节点的VmEvent组件
         const vmEventCfg = this.events.map((exp: string) => {
             const exps = getExpressionAry(exp);
-            if (!exps) return;
+            if (!exps.test) return;
             const { attrStr, valueStr } = exps;
             const attrStrAry: string[] = attrStr.split(".").map(t => t.trim()).filter(t => t),
                 eventName = attrStrAry[0], eventCount = parseInt(attrStrAry[1] || "0");
