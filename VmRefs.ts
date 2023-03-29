@@ -22,7 +22,23 @@ export class VmRefs extends Component {
         return this._vm = this._vm || this.getBindVmComponent();
     }
     getComponentFormat = BindBase.prototype.getComponentFormat;
-    onLoad() {
+    private isinit: boolean = false;
+    constructor(...p) {
+        super(...p);
+        let _node: Node = this.node;
+        Object.defineProperty(this, "node", {
+            get() { return _node; },
+            set(node: Node) {
+                _node = node;
+                node && requestAnimationFrame(() => {
+                    this.init();
+                })
+            }
+        })
+    }
+    init() {
+        if (this.isinit) return;
+        this.isinit = true;
         const vm: any = this.getVm();
         if (!vm) return;
         const refs = this.refs.map(t => t.trim()).filter(t => t);
@@ -49,5 +65,8 @@ export class VmRefs extends Component {
                 // throw e;
             }
         })
+    }
+    onLoad() {
+        this.init();
     }
 }
