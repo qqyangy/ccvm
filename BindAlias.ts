@@ -26,6 +26,8 @@ export default class BindAlias {
     //初始配置
     public alias: Cfg = {
         text: "Label.string",
+        fontSize: "Label.fontSize",
+        lineHeight: "Label.lineHeight",
         src: "Sprite.spriteFrame",
         width: "UITransform.width",
         height: "UITransform.height",

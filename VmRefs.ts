@@ -3,9 +3,10 @@ import { BindBase } from './modules/BindBase';
 import { VmComponent } from './VmComponent';
 import tools from './modules/tools';
 const { evalfunc, getExpressionAry } = tools;
-const { ccclass, property, executionOrder } = _decorator;
+const { ccclass, property, executionOrder, executeInEditMode } = _decorator;
 @ccclass('VmRefs')
 @executionOrder(-1)
+@executeInEditMode(true)
 export class VmRefs extends Component {
     @property([String])
     public refs: string[] = [];
@@ -55,7 +56,7 @@ export class VmRefs extends Component {
             }
             const { attrStr, valueStr } = exps;
             if (!(attrStr in comp)) return;
-            const attr = /[^\s.\[\(]+/.exec(valueStr);
+            const attr = /[\w$]+/.exec(valueStr);
             if (!attr || !(attr[0] in optRefs)) return;
             try {
                 evalfunc.call(vm, undefined, true, vm, valueStr + "=", comp[attrStr]);
