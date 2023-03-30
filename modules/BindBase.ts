@@ -166,6 +166,8 @@ export class BindBase extends Component {
                 if (vms.length > 0) {
                     const itme: VmComponent = vms[0];
                     exps.attrStr = exps.attrStr.replace("vm", itme.constructor.name);//可使用vm简称当前节点的第一个VmComponent
+                } else {
+                    return console.warn("当前节点不存在任何VmComponent相关组件，绑定表达式无效:" + t);
                 }
             }
             const { attrStr, valueStr } = exps;
