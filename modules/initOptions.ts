@@ -4,21 +4,34 @@ import { myEventName } from "./keyName";
 import { VmComponent } from "../VmComponent";
 
 
-const types = ["[object String]", "[object Number]", "[object Boolean]"];
+const types = ["[object String]", "[object Number]", "[object Boolean]"],
+    typecfg = {
+        function: "[object Function]",
+        object: "[object Object]"
+    }
 const validValue = (n, o) => {
     return n === o && types.indexOf(Object.prototype.toString.call(n)) !== -1;
 }
+
+
+type Functions = { [key: string]: Function }
+//watch类型
+type WatchItem = {
+    [key: string]: Function | WatchOption,//其他值
+    _?: Function//默认值
+}
+type WatchOption = { [key: string]: WatchItem | Function }
 export interface VmOptions {
     data?: {} | string[],
     props?: {} | string[],
     refs?: {} | string[],
     depth?: { [key: string]: number },//数据观察深度
-    watch?: { [key: string]: Function },
+    watch?: WatchOption,
     watchImmediate?: string[],//保证初始化立即执行1次
     watchStartImmediate?: string[],//保证最迟start后至少执行1次
-    methods?: { [key: string]: Function },
+    methods?: Functions,
     events?: { [key: string]: Function | null } | string[],//事件相应函数
-    computed?: { [key: string]: Function },
+    computed?: Functions,
     tempHelp?: {},//附加表达式取值变量集合如从cc中导出的对象
     created?: Function,//初始化完成执行
     mounted?: Function,//参数准备就绪执行
@@ -78,6 +91,23 @@ const formatDataRoProps = (data: any, target: any) => {
         return r[k] = target[k], r;
     }, {}) : data;
 },
+    //格式化watch配置
+    formatWatch = (watch: WatchItem | WatchOption, result: Functions = {}, key: string = "", set: Set<any> = new Set()): Functions => {
+        if (!watch || set.has(watch)) return watch as Functions;
+        set.add(watch);
+        return Object.keys(watch).reduce((r, k) => {
+            const item = watch[k];
+            if (!item || [typecfg.function, typecfg.object].indexOf(Object.prototype.toString.call(item)) === -1) return r;
+            const isDefalut = k === "-",
+                isFunction = item instanceof Function,
+                nkey = key ? `${key}.${k}` : k;
+            if (isFunction || isDefalut) {
+                isFunction && (r[isDefalut ? key : nkey] = item);//是函数则赋值
+                return r;
+            }
+            return formatWatch(item as WatchItem, result, nkey, set), r;
+        }, result) as Functions;
+    },
     //直接拷贝函数 methods
     copyfunction = (opt: { [key: string]: Function }, target: any) => {
         const funcs = opt;
@@ -187,7 +217,7 @@ const formatDataRoProps = (data: any, target: any) => {
         if (!opt.watch) return;
         const watch = opt.watch;
         Object.keys(watch).forEach((key: string) => {
-            const watchfunc: Function = watch[key];
+            const watchfunc: Function = watch[key] as Function;
             let listenerOff: Function, oldval: any;
             const getval = (nocall?: boolean) => {
                 const oDEs: any = oldDEs();
@@ -246,6 +276,7 @@ export function execVmOptions(optins: VmOptions, target: VmComponent) {
     recursionWatch({ data: optins.props, DE: target.___$dataEvent___, target });//props
     recursionWatch({ data: optins.refs, DE: target.___$dataEvent___, target });//refs
     setComputed(optins, target, target.___$dataEvent___);//computed
+    optins.watch = formatWatch(optins.watch);//格式化watch
     setWatch(optins, target, watchStartFuncs, watchStartImmediate);//watch
     onwatchCreatStart(optins, watchStartFuncs);//按照watch时机需求生成start
     const mounted = optins.mounted || target["mounted"];
