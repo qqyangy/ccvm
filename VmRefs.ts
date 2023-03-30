@@ -59,7 +59,7 @@ export class VmRefs extends Component {
             const attr = /[\w$]+/.exec(valueStr);
             if (!attr || !(attr[0] in optRefs)) return;
             try {
-                evalfunc.call(vm, undefined, true, vm, valueStr + "=", comp[attrStr]);
+                evalfunc.call(vm, undefined, true, vm, valueStr.replace(/;$/, "") + "=", comp[attrStr]);
             } catch (e) {
                 console.log(`%c解析refs表达式"${t}"中属性"${attrStr}"出现错误`, 'color: red;');
                 console.log(e);
