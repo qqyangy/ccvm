@@ -161,6 +161,13 @@ export class BindBase extends Component {
         this.binds.forEach(t => {
             const exps = getExpressionAry(BindMapKey.parse(t));
             if (!exps.test) return;
+            if (exps.attrStr.split(".")[0] === "vm") {
+                const vms: VmComponent[] = this.getVmComponent(this.node);
+                if (vms.length > 0) {
+                    const itme: VmComponent = vms[0];
+                    exps.attrStr = exps.attrStr.replace("vm", itme.constructor.name);//可使用vm简称当前节点的第一个VmComponent
+                }
+            }
             const { attrStr, valueStr } = exps;
             /******限定VmComponent组件只能被绑定props --start******/
             const attrStrA = attrStr.split(".").map(t => t.trim()).filter(t => t),//获取被赋值表达式数组形式

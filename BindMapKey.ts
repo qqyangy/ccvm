@@ -11,12 +11,12 @@ export default class BindMapKey {
 
     //获取配置
     public static getConfig(): Cfg {
-        return getBindMapKey().configs;
+        return getBindMapKey().alias;
     }
     //追加配置
     public static addConfig(cfg: Cfg): Cfg {
         const _bindMapKey: BindMapKey = getBindMapKey();
-        return Object.assign(_bindMapKey.configs, cfg);
+        return Object.assign(_bindMapKey.alias, cfg);
     }
     //映射转回
     public static parse(exp: string): string {
@@ -24,7 +24,7 @@ export default class BindMapKey {
     }
 
     //初始配置
-    public configs: Cfg = {
+    public alias: Cfg = {
         text: "Label.string",
         src: "Sprite.spriteFrame",
         width: "UITransform.width",
@@ -37,13 +37,14 @@ export default class BindMapKey {
         scale: "node.scale",
         scaleX: "node.scaleX",
         scaleY: "node.scaleY",
-        scaleZ: "node.scaleZ"
+        scaleZ: "node.scaleZ",
+        opacity: "UIOpacity.opacity"
     };
     public parsekey(exp: string) {
         const _exp = exp.trim();
         if (_exp.charAt(0) !== ":") return exp;
         const str = (t => t.substring(1, t.length))(_exp.split("=")[0].split(".")[0]);
-        if (!str || !this.configs[str]) return exp;
-        return exp.replace(`:${str}`, this.configs[str]);//替换成正确的表达式
+        if (!str || !this.alias[str]) return exp;
+        return exp.replace(`:${str}`, this.alias[str]);//替换成正确的表达式
     }
 }
