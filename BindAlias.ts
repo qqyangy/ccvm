@@ -1,26 +1,26 @@
-let instanceBindMapKey: BindMapKey;
-function getBindMapKey(): BindMapKey {
-    return instanceBindMapKey || new BindMapKey();
+let instanceBindAlias: BindAlias;
+function getBindAlias(): BindAlias {
+    return instanceBindAlias || new BindAlias();
 }
 type Cfg = { [key: string]: string };
-export default class BindMapKey {
+export default class BindAlias {
     constructor() {
-        if (instanceBindMapKey) return instanceBindMapKey;
-        instanceBindMapKey = this;
+        if (instanceBindAlias) return instanceBindAlias;
+        instanceBindAlias = this;
     }
 
     //获取配置
     public static getConfig(): Cfg {
-        return getBindMapKey().alias;
+        return getBindAlias().alias;
     }
     //追加配置
     public static addConfig(cfg: Cfg): Cfg {
-        const _bindMapKey: BindMapKey = getBindMapKey();
-        return Object.assign(_bindMapKey.alias, cfg);
+        const _bindAlias: BindAlias = getBindAlias();
+        return Object.assign(_bindAlias.alias, cfg);
     }
     //映射转回
     public static parse(exp: string): string {
-        return getBindMapKey().parsekey(exp);
+        return getBindAlias().parsekey(exp);
     }
 
     //初始配置

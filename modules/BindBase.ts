@@ -4,7 +4,7 @@ import { DataEvent, listenerDEs, oldDEs, recoveryDEs } from './DataEvent';
 import tools from './tools';
 import { VmEvent, VmExpandEvent, VmEventTypeAll } from '../VmEvent';
 import { nodeSet } from './nodeSet';
-import BindMapKey from '../BindMapKey';
+import BindAlias from '../BindAlias';
 import { isForTemplet, getForWithdata } from './forTool';
 import { myEventName } from './keyName';
 const { evalfunc, getExpressionAry } = tools;
@@ -159,7 +159,7 @@ export class BindBase extends Component {
         if (isForTemplet(this.node, vm.node)) return;
         const _components = this.getComponentFormat(this.node["___$sets___"]);
         this.binds.forEach(t => {
-            const exps = getExpressionAry(BindMapKey.parse(t));
+            const exps = getExpressionAry(BindAlias.parse(t));
             if (!exps.test) return;
             if (exps.attrStr.split(".")[0] === "vm") {
                 const vms: VmComponent[] = this.getVmComponent(this.node);
