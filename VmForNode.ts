@@ -81,9 +81,8 @@ export class VmForNode extends VmComponent {
         }, {});
         if (_vmNode) {
             _vmNode.forWith = forWith;
-        } else {
-            _itemnode[forTool.forWith] = forWith;
         }
+        _itemnode[forTool.forWith] = forWith;
         _itemnode[forTool.forIndex] = index;
         this.node.addChild(_itemnode);
 
