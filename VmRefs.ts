@@ -31,13 +31,13 @@ export class VmRefs extends Component {
             get() { return _node; },
             set(node: Node) {
                 _node = node;
-                node && requestAnimationFrame(() => {
-                    this.init();
-                })
+                node && Promise.resolve().then(() => {
+                    this.init(1);
+                });
             }
         })
     }
-    init() {
+    init(n) {
         if (this.isinit) return;
         this.isinit = true;
         const vm: any = this.getVm();
@@ -68,6 +68,6 @@ export class VmRefs extends Component {
         })
     }
     onLoad() {
-        this.init();
+        this.init(2);
     }
 }
