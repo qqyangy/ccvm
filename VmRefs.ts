@@ -37,6 +37,13 @@ export class VmRefs extends Component {
             }
         })
     }
+    //格式化自动类型绑定
+    formatAutoType(t: string) {
+        return !t.includes("=") && t.includes(":") ? t.split(":").map((v: string, i: number) => {
+            const rt = v.trim().replace(/;$/, "");
+            return i === 1 && rt === "Node" ? "node" : rt;
+        }).reverse().join("=") : t;
+    }
     init(n) {
         if (this.isinit) return;
         this.isinit = true;
@@ -47,7 +54,8 @@ export class VmRefs extends Component {
         const optRefs = vm.vmOptions?.refs;
         if (!optRefs || Object.keys(optRefs).length < 1) return;
         const comp = this.getComponentFormat();//获取所有组件
-        refs.forEach(t => {
+        refs.forEach(_t => {
+            const t = this.formatAutoType(_t);
             const exps = getExpressionAry(t);
             if (exps.code !== 1 && exps.code !== 3) return;
             if (exps.code === 1) {
