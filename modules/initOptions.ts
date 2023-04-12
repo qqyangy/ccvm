@@ -184,16 +184,19 @@ const formatDataRoProps = (data: any, target: any) => {
                             DE.keys.add(k);
                         }
                         if (k in computedval) return computedval[k]; //有值直接返回
-                        const oDEs: any = oldDEs();
-                        DataEvent.DEs = new Set();//设置数据依赖收集口袋
-                        computedval[k] = computed[k].call(target);
-                        const DEs: Set<DataEvent> = DataEvent.DEs;
-                        listenerOff && listenerOff();//移除老的监听
-                        listenerOff = !DEs ? null : listenerDEs(DEs, "bindUpdateSync", () => {
-                            target[k] = computed[k].call(target);
-                        })
-                        DataEvent.DEs = recoveryDEs(oDEs);//处理完成后恢复之前状态
-                        return computedval[k]; //没有值时计算出值在返回
+                        const getval = () => {
+                            const oDEs: any = oldDEs();
+                            DataEvent.DEs = new Set();//设置数据依赖收集口袋
+                            const myComputedval = computed[k].call(target);
+                            const DEs: Set<DataEvent> = DataEvent.DEs;
+                            listenerOff && listenerOff();//移除老的监听
+                            listenerOff = !DEs ? null : listenerDEs(DEs, "bindUpdateSync", () => {
+                                target[k] = getval();
+                            })
+                            DataEvent.DEs = recoveryDEs(oDEs);//处理完成后恢复之前状态
+                            return myComputedval;
+                        }
+                        return computedval[k] = getval(); //没有值时计算出值在返回
                     },
                     set(v: any) {
                         const oval = computedval[k];
