@@ -91,6 +91,39 @@ const formatDataRoProps = (data: any, target: any) => {
         return r[k] = target[k], r;
     }, {}) : data;
 },
+    //合并相同key的watch值
+    mergeWatchCfg = (val1: any, val2: any) => {
+        const v1type: string = Object.prototype.toString.call(val1),
+            v2type: string = Object.prototype.toString.call(val2),
+            typemaps = {
+                //处理都是函数情况
+                [typecfg.function + typecfg.function]: () => {
+                    return function (...p) {
+                        val1.call(this, ...p);
+                        val2.call(this, ...p);
+                    }
+                },
+                //处理第一个是函数第二个是对象情况
+                [typecfg.function + typecfg.object]: () => {
+                    val2["_"] = val2["_"] ? mergeWatchCfg(val2["_"], val1) : val1;
+                    return val2;
+                },
+                //处理第一个是对象第二个是函数情况
+                [typecfg.object + typecfg.function]: () => {
+                    val1["_"] = val1["_"] ? mergeWatchCfg(val1["_"], val2) : val2;
+                    return val1;
+                },
+                //处理都是对象情款
+                [typecfg.object + typecfg.object]: () => {
+                    Object.keys(val2).forEach((k) => {
+                        return val1[k] = val1[k] ? mergeWatchCfg(val1[k], val2[k]) : val2[k];
+                    });
+                    return val1;
+                },
+            },
+            mkey = v1type + v2type;
+        return typemaps[mkey] ? typemaps[mkey]() : val1;
+    },
     //格式化watch配置
     formatWatch = (watch: WatchItem | WatchOption, result: Functions = {}, key: string = "", set: Set<any> = new Set()): Functions => {
         if (!watch || set.has(watch)) return watch as Functions;
@@ -99,13 +132,19 @@ const formatDataRoProps = (data: any, target: any) => {
             const item = watch[k];
             if (!item || [typecfg.function, typecfg.object].indexOf(Object.prototype.toString.call(item)) === -1) return r;
             const isDefalut = k === "-",
-                isFunction = item instanceof Function,
-                nkey = key ? `${key}.${k}` : k;
-            if (isFunction || isDefalut) {
-                isFunction && (r[isDefalut ? key : nkey] = item);//是函数则赋值
-                return r;
-            }
-            return formatWatch(item as WatchItem, result, nkey, set), r;
+                isFunction = item instanceof Function;
+            k.split(",").map((t: string) => t.trim()).filter(t => t).forEach(k1 => {
+                const nkey = key ? `${key}.${k1}` : k1;
+                if (isFunction || isDefalut) {
+                    if (isFunction) {
+                        const funcname = isDefalut ? key : nkey;
+                        r[funcname] = r[funcname] ? mergeWatchCfg(r[funcname], item) : item
+                    }
+                } else {
+                    formatWatch(item as WatchItem, result, nkey, set)
+                }
+            })
+            return r;
         }, result) as Functions;
     },
     //直接拷贝函数 methods
