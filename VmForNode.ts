@@ -37,10 +37,6 @@ export class VmForNode extends VmComponent {
         },
         start() {
             this.initBInd();
-            if (this.startcall) {
-                this.execFor();
-            }
-            this.startcall = 2;
         },
         methods: {
             execFor() {
@@ -55,13 +51,10 @@ export class VmForNode extends VmComponent {
                 });
             }
         },
+        watchStartImmediate: ["accept_mapdata_keys"],
         watch: {
             accept_mapdata_keys() {
-                if (this.startcall === 2) {
-                    this.execFor();
-                } else {
-                    this.startcall = 1;
-                }
+                this.execFor();
             },
             node(nd: Node) {
                 nd && nd.children.length > 0 && this.nodeloaded(nd);//挂在成功
@@ -69,6 +62,7 @@ export class VmForNode extends VmComponent {
         }
     };
     instantiateItem(): Node {
+        return instantiate(this.itemNode);//强制最新
         return this.nodePoolList.length > 0 ? this.nodePoolList.shift() : instantiate(this.itemNode);
     }
     creatItemNode(item, index, key, length) {
