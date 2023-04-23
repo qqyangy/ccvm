@@ -16,7 +16,7 @@ export function getForWithdata(node: any, vmNode: any) {
     let pnode: any = node;
     if (!node || !vmNode) return;
     do {
-        if (pnode[forWith]) return pnode[forWith];
+        if (pnode[forWith]) return () => pnode[forWith];
         pnode = pnode.parent;
     } while (pnode && vmNode !== pnode);
 }

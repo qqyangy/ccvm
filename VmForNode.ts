@@ -62,7 +62,6 @@ export class VmForNode extends VmComponent {
         }
     };
     instantiateItem(): Node {
-        return instantiate(this.itemNode);//强制最新
         return this.nodePoolList.length > 0 ? this.nodePoolList.shift() : instantiate(this.itemNode);
     }
     creatItemNode(item, index, key, length) {
@@ -72,7 +71,7 @@ export class VmForNode extends VmComponent {
         const forWith = (this.variables || "").split(",").reduce((r, k, i) => {
             if (!k || !k.trim()) return r;
             return r[k] = attrs[i], r;
-        }, {});
+        }, { ___VmforList__: this.mapdata });
         if (_vmNode) {
             _vmNode.forWith = forWith;
         }

@@ -18,9 +18,12 @@ export class BindBase extends Component {
     @property([String])
     public events: string[] = [];
 
-    public forWith: {};//for组件附加域
+    public getforWith: Function;//获取forWith
+    public forWith: any;//直接forWith
     public get forWithdata() {
-        return this.forWith || (this.forWith = getForWithdata(this.node, this.getVm().node));
+        if (this.forWith) return this.forWith;
+        const getforWith = this.getforWith || (this.getforWith = getForWithdata(this.node, this.getVm().node));
+        return getforWith ? getforWith() : null;
     }
 
     //通过代码动态关联绑定关系方法
