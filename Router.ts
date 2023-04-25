@@ -303,15 +303,17 @@ export class Router {
         return this;
     }
     go(step: number = 0): Router {
-        if (this.history.length < 1) return;
-        const historyIndex = Math.min(Math.max(this.historyIndex + step, 1), this.history.length),
-            routeName = this.history[historyIndex - 1];
-        return this.add(routeName, null, null, {
-            added: () => {
-                this.historyIndex = historyIndex;
-                this.del();
-            }, isGo: true
-        });
+        history.go(step);
+        return this;
+        // if (this.history.length < 1) return;
+        // const historyIndex = Math.min(Math.max(this.historyIndex + step, 1), this.history.length),
+        //     routeName = this.history[historyIndex - 1];
+        // return this.add(routeName, null, null, {
+        //     added: () => {
+        //         this.historyIndex = historyIndex;
+        //         this.del();
+        //     }, isGo: true
+        // });
     }
     back() {
         return this.go(-1);
