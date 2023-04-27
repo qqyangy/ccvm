@@ -2,6 +2,7 @@ import { BindBase } from "./BindBase";
 import { DataEvent, listenerDEs, oldDEs, recoveryDEs } from "./DataEvent";
 import { myEventName } from "./keyName";
 import { VmComponent } from "../VmComponent";
+import staticVm from "./staticVm";
 
 
 const types = ["[object String]", "[object Number]", "[object Boolean]"],
@@ -309,6 +310,23 @@ const formatDataRoProps = (_data: any, target: any) => {
             watchFunc();
         } : watchFunc;
     }
+//映射静态属性
+
+export function mapStatic(target: any, keysOpt: { [key: string]: string } | string[]): Functions {
+    if (!target || !(target instanceof Function)) return {};
+    const kOptions = staticVm.formatOptin(target, keysOpt),
+        { data, DE } = staticVm.getDataAndDE(target, kOptions);
+    Object.keys(data).length > 0 && recursionWatch({ data, DE, target });//添加监听
+    const result = Object.keys(kOptions).reduce((r, k) => {
+        const func = function () {
+            return target[kOptions[k]];
+        };
+        r[k] = func
+        return r;
+    }, {});
+    return result;
+}
+
 export function execVmOptions(optins: VmOptions, target: VmComponent) {
     const watchStartFuncs = {},//需要最迟start后执行的watch函数
         watchStartImmediate = [...(optins.watchStartImmediate || [])];
