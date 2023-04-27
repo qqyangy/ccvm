@@ -29,7 +29,10 @@ export class VmComponent extends Component {
                         execVmOptions(opt, this);//关联vm
                     }
                 }
-            })
+            });
+            if (this.constructor["vmOptions"]) {
+                this["vmOptions"] = Object.assign({}, this.constructor["vmOptions"]);
+            }
         } else {
             execVmOptions(this._$vmOptions, this);
         }

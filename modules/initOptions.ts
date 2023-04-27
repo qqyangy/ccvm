@@ -21,10 +21,12 @@ type WatchItem = {
     _?: Function//默认值
 }
 type WatchOption = { [key: string]: WatchItem | Function }
+type DataType = {} | string[];
+type DataTypeC = DataType | (() => DataType);
 export interface VmOptions {
-    data?: {} | string[],
-    props?: {} | string[],
-    refs?: {} | string[],
+    data?: DataTypeC,
+    props?: DataTypeC,
+    refs?: DataTypeC,
     depth?: { [key: string]: number },//数据观察深度
     watch?: WatchOption,
     watchImmediate?: string[],//保证初始化立即执行1次
@@ -86,7 +88,8 @@ const recursionWatch = (par: recursparmas) => {
     return target;
 }
 //格式化data和props
-const formatDataRoProps = (data: any, target: any) => {
+const formatDataRoProps = (_data: any, target: any) => {
+    const data = _data instanceof Function ? _data.call(target) : _data;
     return data instanceof Array ? data.reduce((r, k) => {
         return r[k] = target[k], r;
     }, {}) : data;
