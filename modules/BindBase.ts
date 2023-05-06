@@ -301,6 +301,7 @@ export class BindBase extends Component {
         if (!this.callDeBinds && this.callExcBinds) {
             this.callExcBinds.forEach(fn => fn());//启用所有绑定
         }
+        this.node.emit(myEventName.enabled);//触发enabled事件
     }
     start() {
         nodeSet(this.node);

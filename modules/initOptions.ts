@@ -38,6 +38,7 @@ export interface VmOptions {
     tempHelp?: {},//附加表达式取值变量集合如从cc中导出的对象
     created?: Function,//初始化完成执行
     mounted?: Function,//参数准备就绪执行
+    enabled?: Function,//onEnable的后置执行函数
     onLoad?: Function,
     onEnable?: Function,
     start?: Function,
@@ -166,6 +167,24 @@ const formatDataRoProps = (_data: any, target: any) => {
         const newhooks = {},
             oldhooks = {},
             hookKeys = ["onLoad", "onEnable", "start", "update", "lateUpdate", "onDisable", "onDestroy"];
+        if (opt.enabled) {
+            const oldOnEnable = opt.onEnable,
+                oldMounted = opt.mounted;
+            let isMounted: boolean = false;//知否已执行mounted
+            function mounted() {
+                oldMounted && oldMounted.call(this);
+                isMounted = true;
+                opt.enabled.call(this);
+            }
+            function onEnable() {
+                oldOnEnable && oldOnEnable.call(this);
+                isMounted && Promise.resolve().then(() => {
+                    opt.enabled.call(this);
+                })
+            }
+            opt.onEnable = onEnable;
+            opt.mounted = mounted;
+        }
         if (opt.mounted) {
             let oldStart;
             function start() {
