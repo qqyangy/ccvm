@@ -7,6 +7,8 @@ import { nodeSet } from './nodeSet';
 import BindAlias from '../BindAlias';
 import { isForTemplet, getForWithdata } from './forTool';
 import { myEventName } from './keyName';
+import { VmTriggerEvent } from '../VmTriggerEvent';
+
 const { evalfunc, getExpressionAry } = tools;
 const { ccclass, property } = _decorator;
 
@@ -113,13 +115,15 @@ export class BindBase extends Component {
                 console.log(e);
                 // throw e;
             }
-            this.node.active = active_val = !!val;
             const Des: Set<DataEvent> = DataEvent.DEs;
             if (this._disbindActive) {
                 this._disbindActive();
             }
             this._disbindActive = !Des ? null : listenerDEs(Des, "bindUpdate", setdata);
             DataEvent.DEs = recoveryDEs(oDEs);//处理完成后恢复之前状态
+            this.activeAffirmactive = setdata;
+            this.forceActiveTrigger();
+            this.node.active = active_val = !!val;
         }
         setdata();
         if (typeof active_val === "boolean" && this.node) {
@@ -297,15 +301,45 @@ export class BindBase extends Component {
             this.callDeBinds = null;
         }
     }
+    /******加强active绑定相关********/
+    private parentnode: Node;
+    private _offTriggerFunc: Function;
+    private activeAffirmactive: Function;
+    private isActiveTrigger: boolean = false;
+    private forceActiveTrigger() {
+        if (this.isActiveTrigger || this.parentnode) return;
+        this.activeTrigger();//初始化强制加强关联active
+    }
+    private offTrigger() {
+        if (this._offTriggerFunc) {
+            this._offTriggerFunc();
+            this._offTriggerFunc = null;
+        }
+    };
+    activeTrigger(n?) {
+        this.isActiveTrigger = true;
+        if (!this.bindActive) return;
+        this.parentnode = this.node.parent;
+        this.offTrigger();//移除原监听
+        if (!this.activeAffirmactive || !this.parentnode || !this.node) return;
+        this._offTriggerFunc = VmTriggerEvent.on(VmTriggerEvent.trigger.enable, this.parentnode, () => {
+            this.activeAffirmactive();
+        });
+    }
+    private _isInitBindActive: boolean = false;
     onEnable() {
         if (!this.callDeBinds && this.callExcBinds) {
             this.callExcBinds.forEach(fn => fn());//启用所有绑定
         }
         this.node.emit(myEventName.enabled);//触发enabled事件
+        if (!this._isInitBindActive) {
+            this.initBindActive(true);
+            this._isInitBindActive = true;
+        }
+        this.activeTrigger(1);
     }
     start() {
         nodeSet(this.node);
-        this.initBindActive(true);
         this.bindAttribute();
         this.bindEvent();
         this.node.emit(myEventName.mounted);//触发mounted事件
@@ -315,6 +349,7 @@ export class BindBase extends Component {
     }
     onDestroy() {
         this.deBindFunc();
+        this.offTrigger();
         this._disbindActive && this._disbindActive();//解绑active
     }
     constructor(...p) {
