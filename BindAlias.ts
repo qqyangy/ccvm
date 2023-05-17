@@ -1,3 +1,5 @@
+import { Node } from 'cc';
+import { VmImage } from './VmImage';
 let instanceBindAlias: BindAlias;
 function getBindAlias(): BindAlias {
     return instanceBindAlias || new BindAlias();
@@ -19,8 +21,8 @@ export default class BindAlias {
         return Object.assign(_bindAlias.alias, cfg);
     }
     //映射转回
-    public static parse(exp: string): string {
-        return getBindAlias().parsekey(exp);
+    public static parse(exp: string, node?: Node): string {
+        return getBindAlias().parsekey(exp, node);
     }
 
     //初始配置
@@ -29,6 +31,8 @@ export default class BindAlias {
         fontSize: "Label.fontSize",
         lineHeight: "Label.lineHeight",
         src: "Sprite.spriteFrame",
+        image: "VmImage.src",
+        "image#1": "VmImage.src",
         width: "UITransform.width",
         height: "UITransform.height",
         anchorX: "UITransform.anchorX",
@@ -42,11 +46,17 @@ export default class BindAlias {
         scaleZ: "node.scaleZ",
         opacity: "UIOpacity.opacity"
     };
-    public parsekey(exp: string) {
+    public parsekey(exp: string, node?: Node) {
         const _exp = exp.trim();
         if (_exp.charAt(0) !== ":") return exp;
         const str = (t => t.substring(1, t.length))(_exp.split("=")[0].split(".")[0]);
         if (!str || !this.alias[str]) return exp;
+        if (node && str.indexOf("image") === 0) {
+            const _vmImage: VmImage = node.getComponent(VmImage) || node.addComponent(VmImage);
+            if (str.includes("#1")) {
+                _vmImage.isDirect = false;
+            }
+        }
         return exp.replace(`:${str}`, this.alias[str]);//替换成正确的表达式
     }
 }

@@ -166,7 +166,7 @@ export class BindBase extends Component {
         if (isForTemplet(this.node, vm.node)) return;
         const _components = this.getComponentFormat(this.node["___$sets___"]);
         this.binds.forEach(t => {
-            const exps = getExpressionAry(BindAlias.parse(t));
+            const exps = getExpressionAry(BindAlias.parse(t, this.node));
             if (!exps.test) return;
             if (exps.attrStr.split(".")[0] === "vm") {
                 const vms: VmComponent[] = this.getVmComponent(this.node);

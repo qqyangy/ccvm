@@ -2,8 +2,8 @@ import { _decorator, Sprite, resources, SpriteFrame } from 'cc';
 import { VmComponent, VmOptions } from './VmComponent';
 const { ccclass, property } = _decorator;
 
-@ccclass('VmImages')
-export class VmImages extends VmComponent {
+@ccclass('VmImage')
+export class VmImage extends VmComponent {
     @property(String)
     public src: string = "";//资源地址
     @property(SpriteFrame)
@@ -50,11 +50,11 @@ export class VmImages extends VmComponent {
         methods: {
             init() {
                 this._sprite = this._sprite = this.node.getComponent(Sprite);
-                if (this._defaultSpriteFrame || this.isDirect) return;
+                if (this._defaultSpriteFrame) return;
                 if (this.defaultSpriteFrame) {
                     return this._defaultSpriteFrame = this.defaultSpriteFrame;
                 }
-                if (this._sprite && this._sprite.SpriteFrame) {
+                if (!this.isDirect && this._sprite && this._sprite.SpriteFrame) {
                     return this._defaultSpriteFrame = this._sprite.SpriteFrame;
                 }
             }
@@ -72,12 +72,12 @@ export class VmImages extends VmComponent {
             src(v) {
                 if (!v) return;
                 this.init();
-                this.promiseSpriteFrame = VmImages.getSpriteFrame(v);
+                this.promiseSpriteFrame = VmImage.getSpriteFrame(v);
             },
             promiseSpriteFrame(p: Promise<SpriteFrame>) {
                 const sprite: Sprite = this._sprite;
                 if (!sprite) return;
-                if (!this.isDirect && this._defaultSpriteFrame) {
+                if (this._defaultSpriteFrame) {
                     return sprite.spriteFrame = this._defaultSpriteFrame;
                 }
                 p.then((sf: SpriteFrame) => (sprite.spriteFrame = sf));
