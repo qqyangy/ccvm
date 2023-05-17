@@ -225,7 +225,7 @@ export class BindBase extends Component {
     public getVmComponent(node: Node): VmComponent[] {
         if (!node) return [];
         return (node["_components"] || []).filter((o) => {
-            return o instanceof VmComponent;
+            return (o instanceof VmComponent) && (o.isVmNode || o.vmRootName);
         }) as VmComponent[]
     }
     //获取父及节点中对应VmComponent切具有isVmNode属性的组件

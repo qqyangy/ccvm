@@ -31,8 +31,11 @@ export class VmComponent extends Component {
                     }
                 }
             });
-            if (this.constructor["vmOptions"]) {
-                this["vmOptions"] = Object.assign({}, this.constructor["vmOptions"]);
+            const _vmOptions = this.constructor["vmOptions"];
+            if (_vmOptions) {
+                Promise.resolve().then(() => {
+                    this["vmOptions"] = Object.assign({}, _vmOptions);
+                });
             }
         } else {
             execVmOptions(this._$vmOptions, this);
