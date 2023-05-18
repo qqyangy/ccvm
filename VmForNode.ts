@@ -35,7 +35,7 @@ export class VmForNode extends VmComponent {
                 return this.accept_mapdataformat instanceof Array ? this.accept_mapdataformat.map((v, i) => i) : Object.keys(this.accept_mapdataformat);
             }
         },
-        start() {
+        onEnable() {
             this.initBInd();
         },
         methods: {
