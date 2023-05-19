@@ -4,7 +4,7 @@ const { ccclass, property } = _decorator;
 
 @ccclass('VmImage')
 export class VmImage extends VmComponent {
-    @property(String)
+
     public src: string = "";//资源地址
     @property(SpriteFrame)
     public defaultSpriteFrame: SpriteFrame;//默认SpriteFrame
@@ -46,7 +46,8 @@ export class VmImage extends VmComponent {
     promiseSpriteFrame: Promise<SpriteFrame>;
 
     public static vmOptions: VmOptions = {
-        data: ["src", "promiseSpriteFrame"],
+        data: ["promiseSpriteFrame"],
+        props: ["src"],
         methods: {
             init() {
                 this._sprite = this._sprite = this.node.getComponent(Sprite);
@@ -76,7 +77,7 @@ export class VmImage extends VmComponent {
             },
             promiseSpriteFrame(p: Promise<SpriteFrame>) {
                 const sprite: Sprite = this._sprite;
-                if (!sprite) return;
+                if (!sprite || !p) return;
                 if (this._defaultSpriteFrame) {
                     return sprite.spriteFrame = this._defaultSpriteFrame;
                 }

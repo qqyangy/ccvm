@@ -8,6 +8,7 @@ import BindAlias from '../BindAlias';
 import { isForTemplet, getForWithdata } from './forTool';
 import { myEventName } from './keyName';
 import { VmTriggerEvent } from '../VmTriggerEvent';
+import { VmImage } from '../VmImage';
 
 const { evalfunc, getExpressionAry } = tools;
 const { ccclass, property } = _decorator;
@@ -164,19 +165,27 @@ export class BindBase extends Component {
         const vm: VmComponent = this.getVm();//获取数据源组件
         if (!vm) return;
         if (isForTemplet(this.node, vm.node)) return;
-        const _components = this.getComponentFormat(this.node["___$sets___"]);
+        const _components: any = this.getComponentFormat(this.node["___$sets___"]);
         this.binds.forEach(t => {
             const exps = getExpressionAry(BindAlias.parse(t, this.node));
             if (!exps.test) return;
-            if (exps.attrStr.split(".")[0] === "vm") {
-                const vms: VmComponent[] = this.getVmComponent(this.node);
-                if (vms.length > 0) {
-                    const itme: VmComponent = vms[0];
-                    exps.attrStr = exps.attrStr.replace("vm", itme.constructor.name);//可使用vm简称当前节点的第一个VmComponent
-                } else {
-                    return console.warn("当前节点不存在任何VmComponent相关组件，绑定表达式无效:" + t);
+            const special = ({
+                vm: () => {
+                    const vms: VmComponent[] = this.getVmComponent(this.node);
+                    if (vms.length > 0) {
+                        const itme: VmComponent = vms[0];
+                        exps.attrStr = exps.attrStr.replace("vm", itme.constructor.name);//可使用vm简称当前节点的第一个VmComponent
+                    } else {
+                        return console.warn("当前节点不存在任何VmComponent相关组件，绑定表达式无效:" + t);
+                    }
+                },
+                VmImage: () => {
+                    if (_components.VmImage) return;
+                    const _VmImage = this.node.getComponent(VmImage);
+                    _VmImage && (_components.VmImage = _VmImage);
                 }
-            }
+            })[exps.attrStr.split(".")[0]];
+            special && special();
             const { attrStr, valueStr } = exps;
             /******限定VmComponent组件只能被绑定props --start******/
             const attrStrA = attrStr.split(".").map(t => t.trim()).filter(t => t),//获取被赋值表达式数组形式
