@@ -24,8 +24,7 @@ export class BindBase extends Component {
     public getforWith: Function;//获取forWith
     public forWith: any;//直接forWith
     public get forWithdata() {
-        if (this.forWith) return this.forWith;
-        const getforWith = this.getforWith || (this.getforWith = getForWithdata(this.node, this.getVm().node));
+        const getforWith = this.getforWith || (this.getforWith = getForWithdata(this.node, this.getVm().node, this.forWith));
         return getforWith ? getforWith() : null;
     }
 
