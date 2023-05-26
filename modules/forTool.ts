@@ -23,6 +23,6 @@ export function getForWithdata(node: any, vmNode: any, baseWith?: any) {
     } while (pnode && vmNode !== pnode);
     if (!baseWith && withNodes.length < 1) return;
     return () => {
-        return Object.assign(withNodes.reduce((r, node) => Object.assign(r, node[forWith] || {}), {}), baseWith || {});
+        return Object.assign(withNodes.reduce((r, node) => Object.assign(r, node[forWith] || {}), {}));
     }
 }
