@@ -32,8 +32,9 @@ export interface VmOptions {
     watch?: WatchOption,
     watchImmediate?: string[],//保证初始化立即执行1次
     watchStartImmediate?: string[],//保证最迟start后至少执行1次
-    methods?: Functions,
+    methods?: { [key: string]: Function | null } | string[],
     events?: { [key: string]: Function | null } | string[],//事件相应函数
+    filters?: { [key: string]: Function | null } | string[],//过滤器相关函数
     computed?: Functions,
     tempHelp?: {},//附加表达式取值变量集合如从cc中导出的对象
     created?: Function,//初始化完成执行
@@ -353,7 +354,9 @@ export function execVmOptions(optins: VmOptions, target: VmComponent) {
     optins.data = formatDataRoProps(optins.data, target);
     optins.props = formatDataRoProps(optins.props, target);
     optins.refs = formatDataRoProps(optins.refs, target);
-    const events = optins.events = formatDataRoProps(optins.events, target);
+    const events = optins.events = formatDataRoProps(optins.events, target),
+        methods = optins.methods = formatDataRoProps(optins.methods, target),
+        filters = optins.filters = formatDataRoProps(optins.filters, target);
     recursionWatch({ data: optins.data, DE: target.___$dataEvent___, target, depthcfg: optins.depth });//data
     recursionWatch({ data: optins.props, DE: target.___$dataEvent___, target });//props
     recursionWatch({ data: optins.refs, DE: target.___$dataEvent___, target });//refs
@@ -367,8 +370,9 @@ export function execVmOptions(optins: VmOptions, target: VmComponent) {
         target["mounted"] && delete target["mounted"];
     }
     resethooks(optins, target);//hooks
-    copyfunction(optins.methods, target);//methods
+    copyfunction(methods, target);//methods
     copyfunction(events, target);//events
+    copyfunction(filters, target);//filters
     target.___$tempHelp___ = optins.tempHelp;
     const created = optins.created || target["created"];
     created && created.call(target);//执行created钩子函数

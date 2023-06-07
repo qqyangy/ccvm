@@ -10,7 +10,7 @@ import { myEventName } from './keyName';
 import { VmTriggerEvent } from '../VmTriggerEvent';
 import { VmImage } from '../VmImage';
 
-const { evalfunc, getExpressionAry } = tools;
+const { evalfunc, compileFilter, getExpressionAry } = tools;
 const { ccclass, property } = _decorator;
 
 export class BindBase extends Component {
@@ -109,7 +109,7 @@ export class BindBase extends Component {
             DataEvent.DEs = new Set();
             let val;
             try {
-                val = evalfunc.call(vm, this.forWithdata, false, vm, valueStr, undefined, vm.___$tempHelp___);
+                val = evalfunc.call(vm, this.forWithdata, false, vm, compileFilter(valueStr, vm), undefined, vm.___$tempHelp___);
             } catch (e) {
                 console.log(`%c解析bindActive表达式求值"${valueStr}"出现错误`, 'color: red;');
                 console.log(e);
@@ -202,7 +202,7 @@ export class BindBase extends Component {
                 DataEvent.DEs = new Set();
                 let val;
                 try {
-                    val = evalfunc.call(vm, this.forWithdata, false, vm, valueStr, undefined, vm.___$tempHelp___);
+                    val = evalfunc.call(vm, this.forWithdata, false, vm, compileFilter(valueStr, vm), undefined, vm.___$tempHelp___);
                 } catch (e) {
                     console.log(`%c解析binds表达式"${t}"中求值"${valueStr}"出现错误`, 'color: red;');
                     console.log(e);

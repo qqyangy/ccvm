@@ -35,4 +35,23 @@ function getExpressionAry(exp: string): { attrStr: string, valueStr: string, tes
         valueStr: string = isvalue ? expv.replace(/^[^=]*=/, "").trim() : "";
     return { attrStr, valueStr, test: !!(attrStr && valueStr), code: 0 + (attrStr && 1 || 0) + (valueStr && 2 || 0) }
 }
-export default { evalfunc, getExpressionAry }
+//编译filter
+function compileFilter(evalStr: string, vm: any) {
+    const filters = vm?._$vmOptions.filters;
+    if (!evalStr || !filters || !evalStr.includes("|") || !/[\w$]\s?\|\s?[\w$]/.exec(evalStr)) return evalStr;//不可能存在过滤器
+    return evalStr.replace(/(?:[\w$]+\.?)+(?:\s?\|\s?[\w$]+(?:\([^)]*\))?)+/g, (t) => {
+        return evalStr.split("|").reduce((r, t) => {
+            const _t = t.trim();
+            if (!r) return _t;
+            const filtername = _t.split("(")[0];
+            if (!(filtername in filters)) return r + _t; //费过滤器不处理
+            return _t.replace(/$|\([^)]*\)/, p => {
+                if (!p) return `(${r})`;
+                const params = p.replace(/^\(|\)$/g, "").split(",");
+                params.push(r);
+                return `(${params.join(",")})`;
+            })
+        }, "")
+    });
+}
+export default { evalfunc, getExpressionAry, compileFilter }
