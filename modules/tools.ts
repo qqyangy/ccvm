@@ -39,8 +39,8 @@ function getExpressionAry(exp: string): { attrStr: string, valueStr: string, tes
 function compileFilter(evalStr: string, vm: any) {
     const filters = vm?._$vmOptions.filters;
     if (!evalStr || !filters || !evalStr.includes("|") || !/[\w$]\s?\|\s?[\w$]/.exec(evalStr)) return evalStr;//不可能存在过滤器
-    return evalStr.replace(/(?:[\w$]+\.?)+(?:\s?\|\s?[\w$]+(?:\([^)]*\))?)+/g, (t) => {
-        return evalStr.split("|").reduce((r, t) => {
+    return evalStr.replace(/(?:[\w$]+\.?)+(?:\s?\|\s?[\w$]+(?:\([^)]*\))?)+/g, (ftstr: string) => {
+        return ftstr.split("|").reduce((r, t) => {
             const _t = t.trim();
             if (!r) return _t;
             const filtername = _t.split("(")[0];
