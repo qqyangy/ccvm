@@ -11,16 +11,32 @@ const destroyNode = (node: Node) => {
     }
 }
 const mapDelFuncs = {
-    0: (node: Node) => {
-        node.active = false;
+    0: function (node: Node) {
+        if (this.transPrevs) {
+            this.transPrevs.add(node);
+        } else {
+            node.active = false;
+        }
     },
-    1: (node: Node, pNode: Node, saveContainer: { [key: string]: Node }) => {
+    1: function (node: Node, pNode: Node, saveContainer: { [key: string]: Node }) {
         saveContainer[node.name] = node;
-        node.parent && pNode === node.parent && node.parent.removeChild(node);
+        if (this.transPrevs) {
+            this.transPrevs.add(node);
+        } else {
+            if (node.parent && pNode === node.parent) {
+                node.parent.removeChild(node);
+            }
+        }
+
     },
-    2: (node: Node, pNode: Node, saveContainer: { [key: string]: Node }, routerName: string) => {
+    2: function (node: Node, pNode: Node, saveContainer: { [key: string]: Node }, routerName: string) {
         saveContainer[node.name] && delete saveContainer[node.name];
-        destroyNode(node);
+        if (this.transPrevs) {
+            this.transPrevs.add(node);
+        } else {
+            node.parent.removeChild(node)
+        }
+        // destroyNode(node);
     }
 }
 //获取指定路由hash段
@@ -127,6 +143,8 @@ export type RouterOptions = {
     deletType?: number,//移除路由的方式 0设置active 1remove 2remove并且destroy
     mapLocation?: boolean,//是否映射到地址栏
     noRemoves?: string[],//不需要移除的路由名称
+    changeListener?: Function,//路由切换监听函数
+    transfer?: (parent: Node, current: Node, prev?: Node, olds?: Node[]) => void;
 }
 export class Router {
     private static RouterBaseInstantiate: { [key: string]: Router } = {};
@@ -202,7 +220,9 @@ export class Router {
         }
 
     }
-
+    changeListener: Function;//路由切换监听函数
+    transfer: Function;//路由转换策略函数
+    transPrevs: Set<Node>;//原有节点
     constructor(option: RouterOptions) {
         if (option.routerViewNode && option.routerViewNode["__Router__"]) {
             return option.routerViewNode["__Router__"];
@@ -210,6 +230,7 @@ export class Router {
         if (Router.RouterBaseInstantiate[option.routerName]) {
             throw new Error(`Same routeName:${option.routerName}`);
         }
+        this.transfer = option.transfer;
         this.routerName = option.routerName;
         Router.RouterBaseInstantiate[option.routerName] = this;
         this.node = option.routerViewNode;
@@ -219,6 +240,7 @@ export class Router {
         this.deletType = option.deletType || 0;
         this.noRemoves = option.noRemoves || [];
         this.mapLocation = !!option.mapLocation;
+        this.changeListener = option.changeListener;
         this.removeRouts = {};
         this.history = [];
         this.historyIndex = 0;
@@ -241,11 +263,11 @@ export class Router {
         if (routeNames) {
             routeNames.forEach(k => {
                 const rtNode: Node = this.node.getChildByName(k);
-                delFunc(rtNode, this.removeRouts, this.routerName);
+                delFunc.call(this, rtNode, this.removeRouts, this.routerName);
             })
         } else {
             this.node.children.forEach((rtNode: Node) => {
-                rtNode instanceof Node && rtNode.name && delFunc(rtNode, this.node, this.removeRouts, this.routerName);
+                rtNode instanceof Node && rtNode.name && delFunc.call(this, rtNode, this.node, this.removeRouts, this.routerName);
             })
         }
         return this;
@@ -263,23 +285,32 @@ export class Router {
             }
         });
     }
+    lastCurent: string;
     add(routeName: string, urlData?: {}, routeData?: {}, optins?: { added?: Function, isGo?: boolean, isChange?: boolean }): Router {
         if (!this.node || !this.node.isValid || !this.node.activeInHierarchy) return;
         const opt = optins || {},
             { added, isGo, isChange } = opt;
         // if(Router)
         const { current, next } = computeUrl(this.routerName, routeName, urlData);//预算url
-        let routeNode: Node = this.node.getChildByName(routeName);
+        let routeNode: Node = this.node.children.find(n => n.name === routeName);
         const noAddChild: boolean = !!routeNode;
-        if (current === next && noAddChild && routeNode.active === true) return;//不需要处理
+        if (current === next && this.lastCurent === next) return;//不需要处理
         if (!routeNode) {
             routeNode = this.removeRouts[routeName] || (this.routers[routeName] && instantiate(this.routers[routeName]));
         }
         if (routeNode) {
+            this.changeListener && this.changeListener(routeName, this.cRouteName);
+            this.transPrevs = this.transfer ? new Set() : null;//是否准备策略函数参数
             added && added();
             routeNode.name = routeName;
-            routeNode.active = true;
-            !noAddChild && this.node.addChild(routeNode);
+            if (this.transPrevs) {
+                const transPrevs: Node[] = Array.from(this.transPrevs);
+                const prev: Node = transPrevs.find((n: Node) => n.name === this.cRouteName);
+                this.transfer(this.node, routeNode, prev, this.transPrevs);
+            } else {
+                routeNode.active = true;
+                !noAddChild && this.node.addChild(routeNode);
+            }
             if (!isGo) {
                 routeNode[routeDatakey] = routeData || null;
                 routeNode[routeDataUrl] = urlData || null;
@@ -296,6 +327,7 @@ export class Router {
                 const hashkey = getSessionkey(this.routerName);
                 this.cHashStr = getCurrentHashString(this.routerName) || "";
                 hashkey && sessionStorage.setItem(hashkey, JSON.stringify(routeData || null));
+                this.lastCurent = next;
             }
         } else {
             throw new Error(`名为“${this.routerName}” 的路由中找不到 指定的"${routeName}"页`);
