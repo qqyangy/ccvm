@@ -167,7 +167,7 @@ export class BindBase extends Component {
         const _components: any = this.getComponentFormat(this.node["___$sets___"]);
         this.binds.forEach(t => {
             const exps = getExpressionAry(BindAlias.parse(t, this.node));
-            if (!exps.test) return;
+            if (!exps?.test) return;
             const special = ({
                 vm: () => {
                     const vms: VmComponent[] = this.getVmComponent(this.node);
@@ -259,9 +259,9 @@ export class BindBase extends Component {
         if (!vm) return;
         if (isForTemplet(this.node, vm.node)) return;
         let _VmEvent: VmEvent;//节点的VmEvent组件
-        const vmEventCfg = this.events.map((exp: string) => {
+        const vmEventCfg = this.events.map((exp: string = "") => {
             const exps = getExpressionAry(exp);
-            if (!exps.test) return;
+            if (!exps?.test) return;
             const { attrStr, valueStr } = exps;
             const attrStrAry: string[] = attrStr.split(".").map(t => t.trim()).filter(t => t),
                 eventName = attrStrAry[0], eventCount = parseInt(attrStrAry[1] || "0");
