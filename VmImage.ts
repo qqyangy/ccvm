@@ -78,10 +78,10 @@ export class VmImage extends VmComponent {
             promiseSpriteFrame(p: Promise<SpriteFrame>) {
                 const sprite: Sprite = this._sprite;
                 if (!sprite || !p) return;
+                p.then((sf: SpriteFrame) => (sprite.spriteFrame = sf));
                 if (this._defaultSpriteFrame) {
                     return sprite.spriteFrame = this._defaultSpriteFrame;
                 }
-                p.then((sf: SpriteFrame) => (sprite.spriteFrame = sf));
             }
         }
     }
