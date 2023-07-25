@@ -1,14 +1,17 @@
 import { Node } from 'cc';
 import { VmImage } from './VmImage';
+import { expendArrt } from './modules/expendCcAttr';
 let instanceBindAlias: BindAlias;
 function getBindAlias(): BindAlias {
     return instanceBindAlias || new BindAlias();
 }
 type Cfg = { [key: string]: string };
+
 export default class BindAlias {
     constructor() {
         if (instanceBindAlias) return instanceBindAlias;
         instanceBindAlias = this;
+        expendArrt();
     }
 
     //获取配置
@@ -25,11 +28,14 @@ export default class BindAlias {
         return getBindAlias().parsekey(exp, node);
     }
 
+
+
     //初始配置
     public alias: Cfg = {
         text: "Label.string",
         fontSize: "Label.fontSize",
         lineHeight: "Label.lineHeight",
+        color: "Label.hexColorStr",//使用拓展属性
         src: "Sprite.spriteFrame",
         image: "VmImage.src",
         "image#1": "VmImage.src",
