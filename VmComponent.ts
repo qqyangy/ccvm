@@ -16,6 +16,8 @@ export class VmComponent extends Component {
     public static ___bindKeys___: Set<string>;
     public ___$dataEvent___: DataEvent;
     public ___$tempHelp___: {};
+    public ___$dependentComputed___: { [key: string]: { unset: Function, set: Function } } = {};
+    public ___$enabled___: boolean = false;//组件激活状态
     constructor(...p) {
         super(...p);
         this._$vmOptions = this["vmOptions"];
@@ -38,6 +40,22 @@ export class VmComponent extends Component {
         } else {
             execVmOptions(this._$vmOptions, this);
         }
+    }
+    protected onEnable(): void {
+        this.___$enabled___ = true;
+        const cig = this.___$dependentComputed___,
+            setfuncs = Object.keys(cig).map(k => cig[k].set);
+        if (setfuncs.length > 0) {
+            this.___$dependentComputed___ = {};
+            setfuncs.forEach(fn => fn());
+        }
+    }
+    protected onDisable(): void {
+        this.___$enabled___ = false;
+        const cig = this.___$dependentComputed___;
+        Object.keys(cig).forEach((k) => {
+            cig[k].unset();//停用有依赖其他数据模型的计算属性
+        })
     }
 }
 

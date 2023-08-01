@@ -1,7 +1,7 @@
 import { EventTarget } from 'cc';
 
 //处理触发器集合
-export function listenerDEs(DEs: Set<DataEvent>, eventType: string, updata: Function): Function {
+export function listenerDEs(DEs: Set<DataEvent>, eventType: string, updata: Function, target?: any): Function {
     const funcs: Function[] = Array.from(DEs).map((de: DataEvent) => {
         const keys: Set<string> = de.keys;
         de.keys = null;
@@ -11,7 +11,8 @@ export function listenerDEs(DEs: Set<DataEvent>, eventType: string, updata: Func
                 updata();
             }
         }
-        de.on(eventType, callback);
+        const nolistner = target && !target.___$enabled___ && target.___$dataEvent___ !== de;
+        !nolistner && de.on(eventType, callback);
         return () => de.off(eventType, callback);
     })
     return () => funcs.forEach(fn => fn());

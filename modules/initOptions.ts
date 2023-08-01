@@ -255,8 +255,19 @@ const formatDataRoProps = (_data: any, target: any) => {
                             listenerOff && listenerOff();//移除老的监听
                             listenerOff = !DEs ? null : listenerDEs(DEs, "bindUpdateSync", () => {
                                 target[k] = getval();
-                            })
+                            }, target)
                             DataEvent.DEs = recoveryDEs(oDEs);//处理完成后恢复之前状态
+                            if (DEs.size > 1 || !DEs.has(target.___$dataEvent___)) {
+                                const setComputed = target.___$dependentComputed___;
+                                setComputed[k] = {
+                                    unset() {
+                                        listenerOff && listenerOff();//移除老的监听
+                                    },
+                                    set() {
+                                        target[k] = getval();//恢复监听
+                                    }
+                                }
+                            }
                             return myComputedval;
                         }
                         return computedval[k] = getval(); //没有值时计算出值在返回
