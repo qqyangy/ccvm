@@ -36,6 +36,7 @@ export default class BindAlias {
         fontSize: "Label.fontSize",
         lineHeight: "Label.lineHeight",
         color: "Label.hexColorStr",//使用拓展属性
+        bgColor: "Sprite.hexColorStr",
         src: "Sprite.spriteFrame",
         image: "VmImage.src",
         "image#1": "VmImage.src",
