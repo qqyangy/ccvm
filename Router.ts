@@ -70,7 +70,7 @@ const getCurrentHashString = (RouterName: string): string => {
         if (!nohistory) {
             location.hash = nhash;//需要产生历史记录时
         } else {
-            history.replaceState(null, null, location.hash ? location.href.replace(location.hash, nhash) : location.href + nhash);//不需要产生历史记录时
+            history.replaceState(null, null, nhash);//不需要产生历史记录时
         }
     },
     getUrl = (RouterName: string) => {
@@ -196,7 +196,7 @@ export class Router {
             timeout = setTimeout(() => {
                 // if (!node.activeInHierarchy && this.cHashStr && location.hash && location.hash.includes(this.cHashStr) && Router.getRouter(this.routerName)) {
                 //     const nhash = location.hash.replace(`#${this.cHashStr}`, "");
-                //     history.replaceState(null, null, location.href.replace(location.hash, nhash));//不需要产生历史记录时
+                //     history.replaceState(null, null, nhash));//不需要产生历史记录时
                 // }
                 Router.delRouter(this.routerName);
             });
