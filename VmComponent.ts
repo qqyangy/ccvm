@@ -41,7 +41,7 @@ export class VmComponent extends Component {
             execVmOptions(this._$vmOptions, this);
         }
     }
-    protected onEnable(): void {
+    protected ___$staticBindOnEnable___(): void {
         this.___$enabled___ = true;
         const cig = this.___$dependentComputed___,
             setfuncs = Object.keys(cig).map(k => cig[k].set);
@@ -50,13 +50,15 @@ export class VmComponent extends Component {
             setfuncs.forEach(fn => fn());
         }
     }
-    protected onDisable(): void {
+    protected ___$staticBindOnDisable___(): void {
         this.___$enabled___ = false;
         const cig = this.___$dependentComputed___;
         Object.keys(cig).forEach((k) => {
             cig[k].unset();//停用有依赖其他数据模型的计算属性
         })
     }
+    protected onEnable(): void { }//必须执行的钩子函数 以保证___$staticBindOnDisable___能被调用
+    protected onDisable(): void { }//必须保证执行的钩子函数 以保证___$staticBindOnDisable___能被调用
 }
 
 

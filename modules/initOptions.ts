@@ -220,8 +220,14 @@ const formatDataRoProps = (_data: any, target: any) => {
                     if (newhooks[t] || !fn) return;
                     oldhooks[t] = fn;
                     newhooks[t] = opt[t] ? (function (...p) {
+                        if (t === "onEnable" && this.___$staticBindOnEnable___) {
+                            this.___$staticBindOnEnable___();
+                        }
                         oldhooks[t].call(target, ...p);
                         opt[t].call(target, ...p);
+                        if (t === "onDisable" && this.___$staticBindOnDisable___) {
+                            this.___$staticBindOnDisable___();
+                        }
                     }) : fn;
                 }
             }
