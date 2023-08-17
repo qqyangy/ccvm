@@ -17,8 +17,9 @@ export class VmImage extends VmComponent {
     public vmRootName: string = "";
 
     /*******获取图片******/
-    public static getSpriteFrame(path: string): Promise<SpriteFrame> {
+    public static getSpriteFrame(path: string | SpriteFrame): Promise<SpriteFrame> {
         return new Promise((resolve, reject) => {
+            if (path && path instanceof SpriteFrame) return resolve(path);
             resources.load(`${path}/spriteFrame`, SpriteFrame, (err, spriteFrame) => {
                 if (err) {
                     return reject(err);

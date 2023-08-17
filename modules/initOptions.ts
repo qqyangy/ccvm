@@ -220,14 +220,8 @@ const formatDataRoProps = (_data: any, target: any) => {
                     if (newhooks[t] || !fn) return;
                     oldhooks[t] = fn;
                     newhooks[t] = opt[t] ? (function (...p) {
-                        if (t === "onEnable" && this.___$staticBindOnEnable___) {
-                            this.___$staticBindOnEnable___();
-                        }
                         oldhooks[t].call(target, ...p);
                         opt[t].call(target, ...p);
-                        if (t === "onDisable" && this.___$staticBindOnDisable___) {
-                            this.___$staticBindOnDisable___();
-                        }
                     }) : fn;
                 }
             }
@@ -371,6 +365,16 @@ export function execVmOptions(optins: VmOptions, target: VmComponent) {
     optins.data = formatDataRoProps(optins.data, target);
     optins.props = formatDataRoProps(optins.props, target);
     optins.refs = formatDataRoProps(optins.refs, target);
+    const oldOnEnable = optins.onEnable;
+    optins.onEnable = function onEnable() {
+        this.___$staticBindOnEnable___();
+        oldOnEnable && oldOnEnable.call(this);
+    };
+    const oldOnDisbale = optins.onDisable;
+    optins.onDisable = function onDisable() {
+        oldOnDisbale && oldOnDisbale.call(this);
+        this.___$staticBindOnDisable___();
+    };
     const events = optins.events = formatDataRoProps(optins.events, target),
         methods = optins.methods = formatDataRoProps(optins.methods, target),
         filters = optins.filters = formatDataRoProps(optins.filters, target);

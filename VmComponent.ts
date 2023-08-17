@@ -57,8 +57,6 @@ export class VmComponent extends Component {
             cig[k].unset();//停用有依赖其他数据模型的计算属性
         })
     }
-    protected onEnable(): void { }//必须执行的钩子函数 以保证___$staticBindOnDisable___能被调用
-    protected onDisable(): void { }//必须保证执行的钩子函数 以保证___$staticBindOnDisable___能被调用
 }
 
 
