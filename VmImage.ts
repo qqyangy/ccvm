@@ -19,8 +19,11 @@ export class VmImage extends VmComponent {
     public vmRootName: string = "";
 
     /*******获取图片******/
-    public static getSpriteFrame(path: string | SpriteFrame): Promise<SpriteFrame> {
+    public static getSpriteFrame(path: string | SpriteFrame | number, target?: VmImage): Promise<SpriteFrame> {
         return new Promise((resolve, reject) => {
+            if (target && target.preloads.length > 0 && typeof path === "number") {
+                return resolve(target.preloads[path]);//返回预设图片
+            }
             if (path && path instanceof SpriteFrame) return resolve(path);
             resources.load(`${path}/spriteFrame`, SpriteFrame, (err, spriteFrame) => {
                 if (err) {
@@ -76,7 +79,7 @@ export class VmImage extends VmComponent {
             src(v) {
                 if (!v) return;
                 this.init();
-                this.promiseSpriteFrame = VmImage.getSpriteFrame(v);
+                this.promiseSpriteFrame = VmImage.getSpriteFrame(v, this);
             },
             promiseSpriteFrame(p: Promise<SpriteFrame>) {
                 const sprite: Sprite = this._sprite;
