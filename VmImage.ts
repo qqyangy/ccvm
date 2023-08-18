@@ -10,6 +10,8 @@ export class VmImage extends VmComponent {
     public defaultSpriteFrame: SpriteFrame;//默认SpriteFrame
     @property(Boolean)
     public isDirect: boolean = true;//是否直接切换（不使用默认）
+    @property([SpriteFrame])
+    preloads: SpriteFrame[] = [];//预加载图片
 
     @property({ type: [Boolean], visible: false, override: true })
     public isVmNode: boolean = false;
