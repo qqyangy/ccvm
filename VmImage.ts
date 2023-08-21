@@ -77,7 +77,7 @@ export class VmImage extends VmComponent {
         watchStartImmediate: ["src"],
         watch: {
             src(v) {
-                if (!v) return;
+                if (!v && v !== 0) return;
                 this.init();
                 this.promiseSpriteFrame = VmImage.getSpriteFrame(v, this);
             },
