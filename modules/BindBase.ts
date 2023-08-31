@@ -168,6 +168,7 @@ export class BindBase extends Component {
         this.binds.forEach(t => {
             const exps = getExpressionAry(BindAlias.parse(t, this.node));
             if (!exps?.test) return;
+            const { VmFabLoad } = BindAlias.importComponent();
             const special = ({
                 vm: () => {
                     const vms: VmComponent[] = this.getVmComponent(this.node);
@@ -182,6 +183,11 @@ export class BindBase extends Component {
                     if (_components.VmImage) return;
                     const _VmImage = this.node.getComponent(VmImage);
                     _VmImage && (_components.VmImage = _VmImage);
+                },
+                VmFabLoad: () => {
+                    if (_components.VmFabLoad) return;
+                    const _VmFabLoad = this.node.getComponent(VmFabLoad);
+                    _VmFabLoad && (_components.VmFabLoad = _VmFabLoad);
                 }
             })[exps.attrStr.split(".")[0]];
             special && special();

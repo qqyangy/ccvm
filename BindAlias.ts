@@ -1,5 +1,6 @@
 import { Node } from 'cc';
 import { VmImage } from './VmImage';
+import { VmFabLoad } from './VmFabLoad';
 import { expendArrt } from './modules/expendCcAttr';
 let instanceBindAlias: BindAlias;
 function getBindAlias(): BindAlias {
@@ -27,6 +28,9 @@ export default class BindAlias {
     public static parse(exp: string, node?: Node): string {
         return getBindAlias().parsekey(exp, node);
     }
+    public static importComponent() {
+        return { VmImage, VmFabLoad }
+    }
 
 
 
@@ -40,6 +44,7 @@ export default class BindAlias {
         src: "Sprite.spriteFrame",
         image: "VmImage.src",
         "image#1": "VmImage.src",
+        fabsrc: "VmFabLoad.src",
         width: "UITransform.width",
         height: "UITransform.height",
         anchorX: "UITransform.anchorX",
@@ -58,10 +63,14 @@ export default class BindAlias {
         if (_exp.charAt(0) !== ":") return exp;
         const str = (t => t.substring(1, t.length))(_exp.split("=")[0].split(".")[0]);
         if (!str || !this.alias[str]) return exp;
-        if (node && str.indexOf("image") === 0) {
-            const _vmImage: VmImage = node.getComponent(VmImage) || node.addComponent(VmImage);
-            if (str.includes("#1")) {
-                _vmImage.isDirect = false;
+        if (node) {
+            if (str.indexOf("image") === 0) {
+                const _vmImage: VmImage = node.getComponent(VmImage) || node.addComponent(VmImage);
+                if (str.includes("#1")) {
+                    _vmImage.isDirect = false;
+                }
+            } else if (str === "fabsrc") {
+                node.getComponent(VmFabLoad) || node.addComponent(VmFabLoad);
             }
         }
         return exp.replace(`:${str}`, this.alias[str]);//替换成正确的表达式
