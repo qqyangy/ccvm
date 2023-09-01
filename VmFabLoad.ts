@@ -33,7 +33,7 @@ export class VmFabLoad extends VmComponent {
     @property(Node)
     public comptemplet: Node;//组件模板
     @property(String)
-    public usecomps: string;//要应用的组件
+    public usecomps: string = "";//要应用的组件
     @property([Prefab])
     public preloads: Prefab[] = [];//预加载的预制件
 
@@ -78,34 +78,53 @@ export class VmFabLoad extends VmComponent {
             }
         },
         watchStartImmediate: ["preSrc", "srcNode"],
+        methods: {
+            //提取要合并的属性
+            getAttr(cCons: any) {
+                const props = cCons.__props__ || [],
+                    attrs = cCons.__attrs__ || {},
+                    attrArys = Object.keys(attrs).map(t => t.split("$_$")[0]);
+                return props.filter(t => {
+                    return t && attrArys.indexOf(t) !== -1;
+                })
+            },
+            setComponent(v: Node) {
+                const readComponents: Component[] = this.readComponents;
+                readComponents.forEach((c: any) => {
+                    const compCons: any = c?.constructor;
+                    if (!compCons) return;
+                    const nodeComp: Component = v.getComponent(compCons) || v.addComponent(compCons),
+                        keys: string[] = this.getAttr(compCons);
+                    keys.forEach(k => {
+                        const value = c[k];
+                        let nvalue = value;
+                        if (value && ["[object Object]", "[object Array]"].indexOf(Object.prototype.toString.call(value)) !== -1) {
+                            nvalue = JSON.parse(JSON.stringify(value));
+                        }
+                        nodeComp[k] = nvalue;
+                    })
+                })
+                return v;
+            }
+        },
         watch: {
             preSrc(v: Prefab | Promise<Prefab>) {
                 if (!v) return this.srcNode = null;
                 if (v instanceof Prefab) {
-                    return this.srcNode = instantiate(v);
+                    return this.srcNode = this.setComponent(instantiate(v));
                 }
                 if (v instanceof Promise) {
                     return v.then(d => {
-                        this.srcNode = instantiate(d);
+                        this.srcNode = this.setComponent(instantiate(d));
                     }).catch(e => { })
                 }
             },
             srcNode(v: Node) {
                 const containerBox: Node = this.containerBox,
                     loading: Node = this.loading;
-                loading && (loading.active = !!v);
+                loading && (loading.active = !v);
                 containerBox.removeAllChildren();
                 if (!v) return;
-                const readComponents: Component[] = this.readComponents;
-                readComponents.forEach((c: any) => {
-                    const compCons: any = c?.constructor;
-                    if (!compCons) return;
-                    const nodeComp: Component = v.getComponent(compCons);
-                    if (nodeComp) {
-                        return Object.assign(nodeComp, c);
-                    }
-                    v.addComponent(compCons);
-                })
                 containerBox.addChild(v);
             }
         }
