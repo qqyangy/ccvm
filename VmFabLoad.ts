@@ -68,12 +68,21 @@ export class VmFabLoad extends VmComponent {
             readComponents() {
                 const comptemplet: Node = this.comptemplet,
                     usecomps: string = this.usecomps || "",
-                    usecompAry: string[] = usecomps.split(",").map(t => t.trim()).filter(t => t);
+                    usecompCfg: { [key: string]: string } = usecomps.split(",").map(t => t.trim()).filter(t => t).reduce((r, k) => {
+                        const ks = k.split("."),
+                            key = ks[0],
+                            value = ks[1] || "m";
+                        return r[key] = value, r;
+                    }, {});
                 if (!comptemplet) return [];
                 const _component: Component[] = comptemplet["_components"] || [];
                 return _component.filter((c: any) => {
-                    const cname = (c._name || c.name || c.constructor?.name || "").replace(/^.*<|>.*$/g, "");
-                    return cname && usecompAry.indexOf(cname) !== -1;
+                    const cname = (c._name || c.name || c.constructor?.name || "").replace(/^.*<|>.*$/g, ""),
+                        cfg = cname && usecompCfg[cname];
+                    if (cfg && ["m", "M", "move"].indexOf(cfg) !== -1) {
+                        comptemplet.removeComponent(c);
+                    }
+                    return cfg;
                 })
             }
         },
