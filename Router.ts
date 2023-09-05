@@ -144,6 +144,7 @@ export type RouterOptions = {
     mapLocation?: boolean,//是否映射到地址栏
     noRemoves?: string[],//不需要移除的路由名称
     changeListener?: Function,//路由切换监听函数
+    autoDel?: boolean
     transfer?: (parent: Node, current: Node, prev?: Node, olds?: Node[]) => void;
 }
 export class Router {
@@ -153,7 +154,9 @@ export class Router {
     }
     public static __nochange__: boolean = false;
     public static delRouter(routerName: string) {
-        if (this.getRouter(routerName)) {
+        const router = this.getRouter(routerName);
+        if (router) {
+            delete router.node["__Router__"];
             delete Router.RouterBaseInstantiate[routerName];
             setUrl(routerName, "", true);
         }
@@ -187,11 +190,19 @@ export class Router {
     mapLocation: boolean;
     cRouteName: string;//当前路由名称
     cHashStr: string;//当前路由hash段
+    autoDel: boolean = false;//是否需要在非激活状态时自动移除
 
     //对容器节点的事件监听
     nodeEvent(node: Node) {
         let timeout;
-        const activechange = () => {
+        const activechange = (n: Node) => {
+            if (!n || n.activeInHierarchy) {
+                if (this.lastDefaltOptions) {
+                    this.default(...this.lastDefaltOptions);
+                }
+                return;
+            };//载入时不处理
+            if (!this.autoDel) return;
             clearTimeout(timeout);
             timeout = setTimeout(() => {
                 // if (!node.activeInHierarchy && this.cHashStr && location.hash && location.hash.includes(this.cHashStr) && Router.getRouter(this.routerName)) {
@@ -230,6 +241,7 @@ export class Router {
         if (Router.RouterBaseInstantiate[option.routerName]) {
             throw new Error(`Same routeName:${option.routerName}`);
         }
+        this.autoDel = option.autoDel;
         this.transfer = option.transfer;
         this.routerName = option.routerName;
         Router.RouterBaseInstantiate[option.routerName] = this;
@@ -273,7 +285,9 @@ export class Router {
         return this;
     }
     //设置默认路由
+    lastDefaltOptions: [string, {}, {}];
     default(routeName: string, urlData?: {}, routeData?: {}) {
+        this.lastDefaltOptions = [routeName, urlData, routeData];
         return !this.mapLocation || !getUrl(this.routerName) ? this.add(routeName, urlData, routeData) : this;
     }
     //切换路由但不产生历史记录
