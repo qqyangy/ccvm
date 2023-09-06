@@ -2,13 +2,14 @@ import { _decorator, Component, Node, instantiate, Prefab } from 'cc';
 export type RouterCfg = { [key: string]: Prefab };
 
 const destroyNode = (node: Node) => {
-    node.children.forEach((cNode: Node) => {
-        destroyNode(cNode);
-    });
-    if (node.parent && node.isValid) {
-        node.parent.removeChild(node);
-        // node.destroy();
-    }
+    // node.children.forEach((cNode: Node) => {
+    //     destroyNode(cNode);
+    // });
+    // if (node.parent && node.isValid) {
+    //     node.parent.removeChild(node);
+    //     // node.destroy();
+    // }
+    node.destroy();
 }
 const mapDelFuncs = {
     0: function (node: Node) {
@@ -35,8 +36,8 @@ const mapDelFuncs = {
             this.transPrevs.add(node);
         } else {
             node.parent.removeChild(node)
+            destroyNode(node);
         }
-        // destroyNode(node);
     }
 }
 //获取指定路由hash段
@@ -145,7 +146,7 @@ export type RouterOptions = {
     noRemoves?: string[],//不需要移除的路由名称
     changeListener?: Function,//路由切换监听函数
     autoDel?: boolean
-    transfer?: (parent: Node, current: Node, prev?: Node, olds?: Node[]) => void;
+    transfer?: (parent: Node, current: Node, prev?: Node, olds?: Node[]) => Promise<any>;
 }
 export class Router {
     private static RouterBaseInstantiate: { [key: string]: Router } = {};
@@ -320,7 +321,11 @@ export class Router {
             if (this.transPrevs) {
                 const transPrevs: Node[] = Array.from(this.transPrevs);
                 const prev: Node = transPrevs.find((n: Node) => n.name === this.cRouteName);
-                this.transfer(this.node, routeNode, prev, this.transPrevs);
+                this.transfer(this.node, routeNode, prev, this.transPrevs).then(() => {
+                    this.transPrevs.forEach((n: Node) => {
+                        n && destroyNode(n);
+                    })
+                });
             } else {
                 routeNode.active = true;
                 !noAddChild && this.node.addChild(routeNode);

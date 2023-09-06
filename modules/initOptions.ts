@@ -77,6 +77,7 @@ const recursionWatch = (par: recursparmas) => {
             set(v: any) {
                 const oval = data[k];
                 if (oval !== v) data[k] = v;
+                if (!DE || DE.destroy) return;
                 if (validValue(v, oval)) return;
                 DE.$vmMultipleBindUpdate(_key, v, oval);
             }
@@ -248,6 +249,7 @@ const formatDataRoProps = (_data: any, target: any) => {
                         }
                         if (k in computedval) return computedval[k]; //有值直接返回
                         const getval = () => {
+                            if (!target.___$dataEvent___ || target.___$dataEvent___.destroy) return computedval[k];
                             const oDEs: any = oldDEs();
                             DataEvent.DEs = new Set();//设置数据依赖收集口袋
                             const myComputedval = computed[k].call(target);
@@ -297,6 +299,7 @@ const formatDataRoProps = (_data: any, target: any) => {
             const watchfunc: Function = watch[key] as Function;
             let listenerOff: Function, oldval: any;
             const getval = (nocall?: boolean) => {
+                if (!target.___$dataEvent___ || target.___$dataEvent___.destroy) return;
                 const oDEs: any = oldDEs();
                 DataEvent.DEs = new Set();
                 const val = key.split(".").reduce((r, _k) => {
@@ -374,6 +377,11 @@ export function execVmOptions(optins: VmOptions, target: VmComponent) {
     optins.onDisable = function onDisable() {
         oldOnDisbale && oldOnDisbale.call(this);
         this.___$staticBindOnDisable___();
+    }
+    const oldOnDestroy = optins.onDestroy;
+    optins.onDestroy = function onDestroy() {
+        oldOnDestroy && oldOnDestroy.call(this);
+        target.___$dataEvent___.destroy = true;
     };
     const events = optins.events = formatDataRoProps(optins.events, target),
         methods = optins.methods = formatDataRoProps(optins.methods, target),

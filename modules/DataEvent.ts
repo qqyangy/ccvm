@@ -38,12 +38,15 @@ export class DataEvent extends EventTarget {
     public keys: Set<string>;
     private _$vmMultipleBindUpdates: Set<string>;
     private _$vmMultipleBindUpdateValues: any;
+    public destroy: boolean = false;//是否被移除
     public $vmMultipleBindUpdate(key: string, nValue: any, oValue: any) {
+        if (this.destroy) return;
         this.emit("bindUpdateSync", [key], nValue, oValue);
         if (!this._$vmMultipleBindUpdates) {
             this._$vmMultipleBindUpdates = new Set();
             this._$vmMultipleBindUpdateValues = {};//存储value
             Promise.resolve().then(() => {
+                if (this.destroy) return;
                 const eventkeys: string[] = Array.from(this._$vmMultipleBindUpdates);
                 this._$vmMultipleBindUpdates = null;
                 this.emit("bindUpdate", eventkeys, this._$vmMultipleBindUpdateValues);

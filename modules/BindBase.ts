@@ -105,6 +105,7 @@ export class BindBase extends Component {
         this._$successbindActive = true;
         let active_val;
         const setdata = () => {
+            if (!vm || !vm.___$dataEvent___ || vm.___$dataEvent___.destroy) return;
             const oDEs: any = oldDEs();
             DataEvent.DEs = new Set();
             let val;
@@ -204,6 +205,7 @@ export class BindBase extends Component {
             /******限定VmComponent组件只能被绑定props --end******/
             let listenerOff: Function;
             const setdata = () => {
+                if (!vm || !vm.___$dataEvent___ || vm.___$dataEvent___.destroy) return;
                 const oDEs: any = oldDEs();
                 DataEvent.DEs = new Set();
                 let val;
