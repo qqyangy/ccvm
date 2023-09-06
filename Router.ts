@@ -101,7 +101,7 @@ const getCurrentHashString = (RouterName: string): string => {
         } catch (e) {
             sData = null;
         }
-        return { name, data, sData };
+        return name && { name, data, sData };
     },
     getHashToRouterName = (): [] => {
         return location.hash.split("#").map(t => {
@@ -115,7 +115,7 @@ const getCurrentHashString = (RouterName: string): string => {
             router = Router.getRouter(mRouterName);
         if (router && router.cHashStr !== cHash) {
             const formatRouter = getUrl(mRouterName);
-            router.push(formatRouter.name, formatRouter.data, formatRouter.sData);//切换到正确路由
+            formatRouter?.name && router.push(formatRouter.name, formatRouter.data, formatRouter.sData);//切换到正确路由
         }
     },
     hashChange = (RouterName: string) => {
@@ -146,7 +146,7 @@ export type RouterOptions = {
     noRemoves?: string[],//不需要移除的路由名称
     changeListener?: Function,//路由切换监听函数
     autoDel?: boolean
-    transfer?: (parent: Node, current: Node, prev?: Node, olds?: Node[]) => Promise<any>;
+    transfer?: (parent: Node, current: Node, prev?: Node, olds?: Node[]) => void;
 }
 export class Router {
     private static RouterBaseInstantiate: { [key: string]: Router } = {};
@@ -258,7 +258,7 @@ export class Router {
         this.history = [];
         this.historyIndex = 0;
         this.del();
-        this.mapLocation && hashChange(option.routerName);//设置路由监听
+        this.mapLocation && getUrl(this.routerName) && hashChange(option.routerName);//设置路由监听
         window["_ccRouter"] = Router;
     }
     push(routeName: string, urlData?: {}, routeData?: {}, deletType?: number): Router {
@@ -289,7 +289,7 @@ export class Router {
     lastDefaltOptions: [string, {}, {}];
     default(routeName: string, urlData?: {}, routeData?: {}) {
         this.lastDefaltOptions = [routeName, urlData, routeData];
-        return !this.mapLocation || !getUrl(this.routerName) ? this.add(routeName, urlData, routeData) : this;
+        return !getUrl(this.routerName) ? this.add(routeName, urlData, routeData) : this;
     }
     //切换路由但不产生历史记录
     change(routeName: string, urlData?: {}, routeData?: {}, deletType?: number) {
@@ -321,11 +321,7 @@ export class Router {
             if (this.transPrevs) {
                 const transPrevs: Node[] = Array.from(this.transPrevs);
                 const prev: Node = transPrevs.find((n: Node) => n.name === this.cRouteName);
-                this.transfer(this.node, routeNode, prev, this.transPrevs).then(() => {
-                    this.transPrevs.forEach((n: Node) => {
-                        n && destroyNode(n);
-                    })
-                });
+                this.transfer(this.node, routeNode, prev, this.transPrevs);
             } else {
                 routeNode.active = true;
                 !noAddChild && this.node.addChild(routeNode);

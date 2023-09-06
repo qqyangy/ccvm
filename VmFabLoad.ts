@@ -25,6 +25,7 @@ export class VmFabLoad extends VmComponent {
     /******data*******/
     srcNode: Node;
     /***props****/
+    @property(String)
     public src: string | number | Prefab = "";//资源地址
 
     /*****set****/
@@ -40,6 +41,8 @@ export class VmFabLoad extends VmComponent {
     @property(Node)
     loading: Node;//loading元素
 
+    preSrc: Promise<Prefab> | Prefab;
+
     /*****overflow******/
     @property({ type: [Boolean], visible: false, override: true })
     public isVmNode: boolean = false;
@@ -47,22 +50,13 @@ export class VmFabLoad extends VmComponent {
     public vmRootName: string = "";
 
     /********computed*******/
-    preSrc: Promise<Prefab> | Prefab;
     containerBox: Node;//容器节点
     vmOptions: VmOptions = {
-        data: ["container", "comptemplet", "usecomps", "preloads", "srcNode"],
+        data: ["container", "comptemplet", "usecomps", "preloads", "srcNode", "preSrc"],
         props: ["src"],
         computed: {
             containerBox() {
                 return this.container || this.node;
-            },
-            preSrc() {
-                const v: number | string | Prefab = this.src;
-                if (!v && v !== 0) return null;
-                const vtype = typeof v;
-                if (vtype === "number") return this.preloads[v as number] || null;
-                if (vtype === "string") return VmFabLoad.loadFab(v as string);
-                if (v instanceof Prefab) return vtype;
             },
             //需要使用的模板组件
             readComponents() {
@@ -86,8 +80,17 @@ export class VmFabLoad extends VmComponent {
                 })
             }
         },
-        watchStartImmediate: ["preSrc", "srcNode"],
         methods: {
+            getpreSrc() {
+                this.preSrc = (() => {
+                    const v: number | string | Prefab = this.src;
+                    if (!v && !(v === 0 || v === "0")) return null;
+                    const vtype = typeof v;
+                    if (vtype === "number" || v == 0) return this.preloads[v as number] || null;
+                    if (vtype === "string") return VmFabLoad.loadFab(v as string);
+                    if (v instanceof Prefab) return vtype;
+                })();
+            },
             //提取要合并的属性
             getAttr(cCons: any) {
                 const props = cCons.__props__ || [],
@@ -116,7 +119,15 @@ export class VmFabLoad extends VmComponent {
                 return v;
             }
         },
+        start() {
+            this.getpreSrc();
+            this.started = true;
+        },
         watch: {
+            src() {
+                if (!this.started) return;
+                this.getpreSrc();
+            },
             preSrc(v: Prefab | Promise<Prefab>) {
                 if (!v) return this.srcNode = null;
                 if (v instanceof Prefab) {
@@ -132,7 +143,9 @@ export class VmFabLoad extends VmComponent {
                 const containerBox: Node = this.containerBox,
                     loading: Node = this.loading;
                 loading && (loading.active = !v);
-                containerBox.removeAllChildren();
+                containerBox.children.forEach((n: Node) => {
+                    n && n.destroy();
+                })
                 if (!v) return;
                 containerBox.addChild(v);
             }
