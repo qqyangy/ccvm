@@ -4,6 +4,24 @@ import { VmComponent } from './VmComponent';
 import tools from './modules/tools';
 const { evalfunc, getExpressionAry } = tools;
 const { ccclass, property, executionOrder, executeInEditMode } = _decorator;
+
+
+const nodeparentLister = async (n: Node, callback: Function) => {
+    if (!n) return;
+    const code = await callback();
+    if (code !== 404) return;
+    let cn = n,
+        pn = cn.parent;
+    while (pn && pn instanceof Node) {
+        cn = pn;
+        pn = cn.parent;
+    }
+    cn !== n && cn.once(Node.EventType.PARENT_CHANGED, () => {
+        nodeparentLister(cn, callback);
+    })
+}
+
+
 @ccclass('VmRefs')
 @executionOrder(-1)
 @executeInEditMode(true)
@@ -15,7 +33,7 @@ export class VmRefs extends Component {
     //获取需要关联数据的组件
     private _bindVmComponent: VmComponent;
     public getBindVmComponent() {
-        if (this._bindVmComponent !== undefined) return this._bindVmComponent;//如果以取得目标组件第二次获取时直接返回
+        if (this._bindVmComponent) return this._bindVmComponent;//如果以取得目标组件第二次获取时直接返回
         return this._bindVmComponent = this.getVmNodeComponent() || null;
     }
     private _vm: VmComponent;
@@ -31,9 +49,11 @@ export class VmRefs extends Component {
             get() { return _node; },
             set(node: Node) {
                 _node = node;
-                node && Promise.resolve().then(() => {
-                    this.init(1);
-                });
+                nodeparentLister(_node, async () => {
+                    return Promise.resolve().then(() => {
+                        return this.init(1);
+                    });
+                })
             }
         })
     }
@@ -44,11 +64,11 @@ export class VmRefs extends Component {
             return i === 1 && rt === "Node" ? "node" : rt;
         }).reverse().join("=") : t;
     }
-    init(n) {
+    async init(n) {
         if (this.isinit) return;
-        this.isinit = true;
         const vm: any = this.getVm();
-        if (!vm) return;
+        if (!vm) return 404;
+        this.isinit = true;
         const refs = this.refs.map(t => t.trim()).filter(t => t);
         if (refs.length < 1) return;
         const optRefs = vm.vmOptions?.refs;

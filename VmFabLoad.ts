@@ -26,7 +26,7 @@ export class VmFabLoad extends VmComponent {
     srcNode: Node;
     /***props****/
     @property(String)
-    public src: string | number | Prefab = "";//资源地址
+    public src: string | number | Prefab = "0";//资源地址
 
     /*****set****/
     @property(Node)
