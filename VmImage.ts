@@ -1,13 +1,16 @@
-import { _decorator, Sprite, resources, SpriteFrame } from 'cc';
+import { _decorator, Sprite, resources, SpriteFrame, assetManager } from 'cc';
 import { VmComponent, VmOptions } from './VmComponent';
 const { ccclass, property } = _decorator;
 
+const srckey = "___src___";
 @ccclass('VmImage')
 export class VmImage extends VmComponent {
 
     public src: string = "";//资源地址
     @property(SpriteFrame)
     public defaultSpriteFrame: SpriteFrame;//默认SpriteFrame
+    @property(Boolean)
+    public autoRelease: boolean = true;//是否自动释放资源
     @property(Boolean)
     public isDirect: boolean = true;//是否直接切换（不使用默认）
     @property([SpriteFrame])
@@ -29,7 +32,9 @@ export class VmImage extends VmComponent {
                 if (err) {
                     return reject(err);
                 }
-                resolve(spriteFrame)
+                spriteFrame[srckey] = path;
+                spriteFrame.addRef();
+                resolve(spriteFrame);
             });
         });
     }
@@ -64,7 +69,21 @@ export class VmImage extends VmComponent {
                 if (!this.isDirect && this._sprite && this._sprite.SpriteFrame) {
                     return this._defaultSpriteFrame = this._sprite.SpriteFrame;
                 }
+            },
+            removeImg() {
+                const sprite: Sprite = this._sprite;
+                if (!sprite) return;
+                const oldSpritFrame: SpriteFrame = sprite.spriteFrame;
+                if (!oldSpritFrame) return;
+                sprite.spriteFrame = null;
+                if (oldSpritFrame[srckey] && this.autoRelease) {
+                    // assetManager.releaseAsset(oldSpritFrame);
+                    oldSpritFrame.decRef();
+                }
             }
+        },
+        onDestroy() {
+            this.removeImg();
         },
         onEnable() {
             this.init();
@@ -84,6 +103,7 @@ export class VmImage extends VmComponent {
             promiseSpriteFrame(p: Promise<SpriteFrame>) {
                 const sprite: Sprite = this._sprite;
                 if (!sprite || !p) return;
+                this.removeImg();//移除旧资源
                 p.then((sf: SpriteFrame) => (sprite.spriteFrame = sf)).catch((e) => {
                     console.log(e);//图片加载失败
                 });

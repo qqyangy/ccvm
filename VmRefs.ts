@@ -6,20 +6,6 @@ const { evalfunc, getExpressionAry } = tools;
 const { ccclass, property, executionOrder, executeInEditMode } = _decorator;
 
 
-const nodeparentLister = async (n: Node, callback: Function) => {
-    if (!n) return;
-    const code = await callback();
-    if (code !== 404) return;
-    let cn = n,
-        pn = cn.parent;
-    while (pn && pn instanceof Node) {
-        cn = pn;
-        pn = cn.parent;
-    }
-    cn !== n && cn.once(Node.EventType.PARENT_CHANGED, () => {
-        nodeparentLister(cn, callback);
-    })
-}
 
 
 @ccclass('VmRefs')
@@ -49,13 +35,33 @@ export class VmRefs extends Component {
             get() { return _node; },
             set(node: Node) {
                 _node = node;
-                nodeparentLister(_node, async () => {
-                    return Promise.resolve().then(() => {
-                        return this.init(1);
-                    });
-                })
+                Promise.resolve().then(() => {
+                    this.setrefs(_node);
+                });
             }
         })
+    }
+    setrefs(n: Node) {
+        const code = this.init(1);
+        if (code !== 404) return;
+        let parent: Node = n.parent,
+            cnode: Node = n;
+        while (parent && parent instanceof Node) {
+            cnode = parent;
+            parent = parent.parent;
+        }
+        if (parent) return;
+        cnode.once(Node.EventType.PARENT_CHANGED, this.parentchange, this);
+        this.cnode = cnode;
+    }
+    cnode: Node;
+    protected onDestroy(): void {
+        if (!this.cnode) return;
+        this.cnode.off(Node.EventType.PARENT_CHANGED, this.parentchange, this);
+    }
+    parentchange() {
+        this.init(1);
+        this.cnode = null;
     }
     //格式化自动类型绑定
     formatAutoType(t: string) {
@@ -64,11 +70,13 @@ export class VmRefs extends Component {
             return i === 1 && rt === "Node" ? "node" : rt;
         }).reverse().join("=") : t;
     }
-    async init(n) {
+    init(n) {
         if (this.isinit) return;
         const vm: any = this.getVm();
         if (!vm) return 404;
-        this.isinit = true;
+        if (vm.node.activeInHierarchy) {
+            this.isinit = true;
+        }
         const refs = this.refs.map(t => t.trim()).filter(t => t);
         if (refs.length < 1) return;
         const optRefs = vm.vmOptions?.refs;

@@ -1,7 +1,17 @@
-import { _decorator, Component, instantiate, Node, Prefab, resources } from 'cc';
+import { _decorator, Component, instantiate, Node, Prefab, resources, assetManager } from 'cc';
 import { VmComponent, VmOptions } from './VmComponent';
 const { ccclass, property } = _decorator;
 
+const srckey = "___src___",
+    fabkey = "___fab___";
+const desNode = (n: Node, autoRelease: boolean) => {
+    if (!n) return;
+    if (n[fabkey]) {
+        assetManager.releaseAsset(n[fabkey]);
+        n[fabkey] = null;
+    }
+    n.destroy();
+}
 @ccclass('VmFabLoad')
 export class VmFabLoad extends VmComponent {
     public static loadFab(src: string): Promise<Prefab> {
@@ -10,6 +20,7 @@ export class VmFabLoad extends VmComponent {
                 if (err) {
                     return reject(err);
                 }
+                prefab[srckey] = src;
                 resolve(prefab);
             });
         })
@@ -27,6 +38,8 @@ export class VmFabLoad extends VmComponent {
     /***props****/
     @property(String)
     public src: string | number | Prefab = "0";//资源地址
+    @property(Boolean)
+    public autoRelease: boolean = true;//是否自动释放资源
 
     /*****set****/
     @property(Node)
@@ -100,7 +113,8 @@ export class VmFabLoad extends VmComponent {
                     return t && attrArys.indexOf(t) !== -1;
                 })
             },
-            setComponent(v: Node) {
+            setComponent(fab: Prefab) {
+                const v: Node = instantiate(fab);
                 const readComponents: Component[] = this.readComponents;
                 readComponents.forEach((c: any) => {
                     const compCons: any = c?.constructor;
@@ -115,13 +129,18 @@ export class VmFabLoad extends VmComponent {
                         }
                         nodeComp[k] = nvalue;
                     })
-                })
+                });
+                fab[srckey] && (v[fabkey] = fab);
                 return v;
             }
         },
         start() {
             this.getpreSrc();
             this.started = true;
+        },
+        onDestroy() {
+            const srcNode: Node = this.srcNode;
+            desNode(srcNode, this.autoRelease);
         },
         watch: {
             src() {
@@ -131,11 +150,11 @@ export class VmFabLoad extends VmComponent {
             preSrc(v: Prefab | Promise<Prefab>) {
                 if (!v) return this.srcNode = null;
                 if (v instanceof Prefab) {
-                    return this.srcNode = this.setComponent(instantiate(v));
+                    return this.srcNode = this.setComponent(v);
                 }
                 if (v instanceof Promise) {
                     return v.then(d => {
-                        this.srcNode = this.setComponent(instantiate(d));
+                        this.srcNode = this.setComponent(d);
                     }).catch(e => { })
                 }
             },
@@ -144,7 +163,7 @@ export class VmFabLoad extends VmComponent {
                     loading: Node = this.loading;
                 loading && (loading.active = !v);
                 containerBox.children.forEach((n: Node) => {
-                    n && n.destroy();
+                    desNode(n, this.autoRelease);
                 })
                 if (!v) return;
                 containerBox.addChild(v);
