@@ -162,12 +162,14 @@ export class Router {
             setUrl(routerName, "", true);
         }
     }
-    public static getRouteData(target: Component | Node) {
+    public static getRouteData(target: Component | Node | string) {
         if (!target) return null;
         if (target instanceof Component) {
             return target.node[routeDatakey] || null;
         } else if (target instanceof Node) {
             return target[routeDatakey] || null;
+        } else if (typeof target === "string") {
+            return Router.getRouteData(Router.getRouter(target)?.cRouterNode);
         }
         return null;
     }
@@ -301,6 +303,7 @@ export class Router {
         });
     }
     lastCurent: string;
+    public cRouterNode: Node;
     add(routeName: string, urlData?: {}, routeData?: {}, optins?: { added?: Function, isGo?: boolean, isChange?: boolean }): Router {
         if (!this.node || !this.node.isValid || !this.node.activeInHierarchy) return;
         const opt = optins || {},
@@ -336,6 +339,7 @@ export class Router {
                 this.history.push(routeName);
                 this.historyIndex++;
             }
+            this.cRouterNode = routeNode;
             this.cRouteName = routeName;
             if (this.mapLocation) {
                 setUrl(this.routerName, next, isChange || next && !getChildRouter(this.routerName));

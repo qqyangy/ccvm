@@ -20,7 +20,7 @@ export class VmRefs extends Component {
     private _bindVmComponent: VmComponent;
     public getBindVmComponent() {
         if (this._bindVmComponent) return this._bindVmComponent;//如果以取得目标组件第二次获取时直接返回
-        return this._bindVmComponent = this.getVmNodeComponent() || null;
+        return this._bindVmComponent = this.getVmNodeComponent && this.getVmNodeComponent() || null;
     }
     private _vm: VmComponent;
     private getVm() {
@@ -42,6 +42,7 @@ export class VmRefs extends Component {
         })
     }
     setrefs(n: Node) {
+        if (!n) return;
         const code = this.init(1);
         if (code !== 404) return;
         let parent: Node = n.parent,

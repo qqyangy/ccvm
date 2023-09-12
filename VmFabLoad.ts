@@ -1,5 +1,6 @@
 import { _decorator, Component, instantiate, Node, Prefab, resources, assetManager } from 'cc';
 import { VmComponent, VmOptions } from './VmComponent';
+import { VmImage } from './VmImage';
 const { ccclass, property } = _decorator;
 
 const srckey = "___src___",
@@ -35,6 +36,7 @@ export class VmFabLoad extends VmComponent {
     }
     /******data*******/
     srcNode: Node;
+    extraLoads: Promise<any>[] = [];
     /***props****/
     @property(String)
     public src: string | number | Prefab = "0";//资源地址
@@ -54,6 +56,9 @@ export class VmFabLoad extends VmComponent {
     @property(Node)
     loading: Node;//loading元素
 
+    @property({ type: [String], tooltip: "额外需要加载的资源带猴子按正确类型加载不带文件类型按图片类型加载" })
+    extraAssets: string[] = [];
+
     preSrc: Promise<Prefab> | Prefab;
 
     /*****overflow******/
@@ -65,8 +70,8 @@ export class VmFabLoad extends VmComponent {
     /********computed*******/
     containerBox: Node;//容器节点
     vmOptions: VmOptions = {
-        data: ["container", "comptemplet", "usecomps", "preloads", "srcNode", "preSrc"],
-        props: ["src"],
+        data: ["container", "comptemplet", "usecomps", "preloads", "srcNode", "preSrc", "extraLoads"],
+        props: ["src", "extraAssets"],
         computed: {
             containerBox() {
                 return this.container || this.node;
@@ -132,17 +137,32 @@ export class VmFabLoad extends VmComponent {
                 });
                 fab[srckey] && (v[fabkey] = fab);
                 return v;
+            },
+            getextraLoads() {
+                if (this.extraLoads?.length < 1) return;
+                this.extraLoads = this.extraAssets.map(t => {
+                    return VmImage.getSpriteFrame(t);
+                });
             }
         },
         start() {
             this.getpreSrc();
+            this.getextraLoads();
             this.started = true;
         },
         onDestroy() {
             const srcNode: Node = this.srcNode;
+            Promise.all(this.extraLoads).then((assets) => {
+                assets.forEach(d => {
+                    assetManager.releaseAsset(d);
+                })
+            })
             desNode(srcNode, this.autoRelease);
         },
         watch: {
+            extraAssets() {
+                this.getextraLoads();
+            },
             src() {
                 if (!this.started) return;
                 this.getpreSrc();
@@ -158,9 +178,10 @@ export class VmFabLoad extends VmComponent {
                     }).catch(e => { })
                 }
             },
-            srcNode(v: Node) {
+            async srcNode(v: Node) {
                 const containerBox: Node = this.containerBox,
                     loading: Node = this.loading;
+                await Promise.all(this.extraLoads);
                 loading && (loading.active = !v);
                 containerBox.children.forEach((n: Node) => {
                     desNode(n, this.autoRelease);
