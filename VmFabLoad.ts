@@ -7,8 +7,8 @@ const srckey = "___src___",
     fabkey = "___fab___";
 const desNode = (n: Node, autoRelease: boolean) => {
     if (!n) return;
-    if (n[fabkey]) {
-        // assetManager.releaseAsset(n[fabkey]);
+    if (n[fabkey] && autoRelease) {
+        assetManager.releaseAsset(n[fabkey]);
         n[fabkey] = null;
     }
     n.destroy();
@@ -156,8 +156,9 @@ export class VmFabLoad extends VmComponent {
         onDestroy() {
             const srcNode: Node = this.srcNode;
             this.nodestroy = false;
-            desNode(srcNode, this.autoRelease);
-            this.autoRelease && Promise.all(this.extraLoads).then((assets) => {
+            const autoRelease = this.autoRelease;
+            desNode(srcNode, autoRelease);
+            autoRelease && Promise.all(this.extraLoads).then((assets) => {
                 assets.forEach(d => {
                     assetManager.releaseAsset(d);
                 })
@@ -173,13 +174,14 @@ export class VmFabLoad extends VmComponent {
                 this.getpreSrc();
             },
             preSrc(v: Prefab | Promise<Prefab>) {
+                const autoRelease = this.autoRelease;
                 if (!v) return this.srcNode = null;
                 if (v instanceof Prefab) {
                     return this.srcNode = this.setComponent(v);
                 }
                 if (v instanceof Promise) {
                     return v.then(d => {
-                        if (!this.nodestroy) return assetManager.releaseAsset(d);
+                        if (!this.nodestroy) return autoRelease && assetManager.releaseAsset(d);
                         this.srcNode = this.setComponent(d);
                     }).catch(e => { })
                 }
@@ -188,13 +190,13 @@ export class VmFabLoad extends VmComponent {
                 const containerBox: Node = this.containerBox,
                     loading: Node = this.loading,
                     autoRelease = this.autoRelease;
+                if (!this.nodestroy) return;
                 await Promise.all(this.extraLoads || []);
                 loading && (loading.active = !v);
                 containerBox?.children.forEach((n: Node) => {
                     if (v && n === v) return;
                     desNode(n, autoRelease);
                 })
-                if (!this.nodestroy) return;
                 if (!v) return;
                 containerBox.addChild(v);
             }
