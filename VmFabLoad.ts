@@ -8,7 +8,7 @@ const srckey = "___src___",
 const desNode = (n: Node, autoRelease: boolean) => {
     if (!n) return;
     if (n[fabkey]) {
-        assetManager.releaseAsset(n[fabkey]);
+        // assetManager.releaseAsset(n[fabkey]);
         n[fabkey] = null;
     }
     n.destroy();
@@ -67,6 +67,8 @@ export class VmFabLoad extends VmComponent {
     @property({ type: [String], visible: false, override: true })
     public vmRootName: string = "";
 
+    nodestroy: boolean = true;//是否没销毁
+
     /********computed*******/
     containerBox: Node;//容器节点
     vmOptions: VmOptions = {
@@ -100,6 +102,7 @@ export class VmFabLoad extends VmComponent {
         },
         methods: {
             getpreSrc() {
+                if (!this.nodestroy) return;
                 this.preSrc = (() => {
                     const v: number | string | Prefab = this.src;
                     if (!v && !(v === 0 || v === "0")) return null;
@@ -152,12 +155,14 @@ export class VmFabLoad extends VmComponent {
         },
         onDestroy() {
             const srcNode: Node = this.srcNode;
-            Promise.all(this.extraLoads).then((assets) => {
+            this.nodestroy = false;
+            desNode(srcNode, this.autoRelease);
+            this.autoRelease && Promise.all(this.extraLoads).then((assets) => {
                 assets.forEach(d => {
                     assetManager.releaseAsset(d);
                 })
-            })
-            desNode(srcNode, this.autoRelease);
+            });
+            this.extraLoads = [];//清空预加载资源
         },
         watch: {
             extraAssets() {
@@ -174,18 +179,22 @@ export class VmFabLoad extends VmComponent {
                 }
                 if (v instanceof Promise) {
                     return v.then(d => {
+                        if (!this.nodestroy) return assetManager.releaseAsset(d);
                         this.srcNode = this.setComponent(d);
                     }).catch(e => { })
                 }
             },
             async srcNode(v: Node) {
                 const containerBox: Node = this.containerBox,
-                    loading: Node = this.loading;
-                await Promise.all(this.extraLoads);
+                    loading: Node = this.loading,
+                    autoRelease = this.autoRelease;
+                await Promise.all(this.extraLoads || []);
                 loading && (loading.active = !v);
-                containerBox.children.forEach((n: Node) => {
-                    desNode(n, this.autoRelease);
+                containerBox?.children.forEach((n: Node) => {
+                    if (v && n === v) return;
+                    desNode(n, autoRelease);
                 })
+                if (!this.nodestroy) return;
                 if (!v) return;
                 containerBox.addChild(v);
             }
