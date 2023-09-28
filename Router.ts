@@ -118,8 +118,7 @@ const getCurrentHashString = (RouterName: string): string => {
             formatRouter?.name && router.push(formatRouter.name, formatRouter.data, formatRouter.sData);//切换到正确路由
         }
     },
-    hashChange = (RouterName: string) => {
-        jumpRouter(RouterName);
+    hashChange = () => {
         if (hashChange["isHashChange"]) return;
         hashChange["isHashChange"] = true;
         window.addEventListener("hashchange", () => {
@@ -260,7 +259,10 @@ export class Router {
         this.history = [];
         this.historyIndex = 0;
         this.del();
-        this.mapLocation && getUrl(this.routerName) && hashChange(option.routerName);//设置路由监听
+        if (this.mapLocation) {
+            getUrl(this.routerName) && jumpRouter(option.routerName);//设置路由监听
+            hashChange();
+        }
         window["_ccRouter"] = Router;
     }
     push(routeName: string, urlData?: {}, routeData?: {}, deletType?: number): Router {
