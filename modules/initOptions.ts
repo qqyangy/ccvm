@@ -344,10 +344,7 @@ const formatDataRoProps = (_data: any, target: any) => {
             watchFunc();
         } : watchFunc;
     }
-//映射静态属性
-
-export function mapStatic(target: any, keysOpt: { [key: string]: string } | string[]): Functions {
-    if (!target || !(target instanceof Function)) return {};
+function mapbase(target: any, keysOpt: { [key: string]: string } | string[]) {
     const kOptions = staticVm.formatOptin(target, keysOpt),
         { data, DE } = staticVm.getDataAndDE(target, kOptions);
     Object.keys(data).length > 0 && recursionWatch({ data, DE, target });//添加监听
@@ -359,6 +356,16 @@ export function mapStatic(target: any, keysOpt: { [key: string]: string } | stri
         return r;
     }, {});
     return result;
+}
+//映射静态属性
+export function mapStatic(target: any, keysOpt: { [key: string]: string } | string[]): Functions {
+    if (!target || !(target instanceof Function)) return {};
+    return mapbase(target, keysOpt);
+}
+
+export function mapObjct(target: any, keysOpt: { [key: string]: string } | string[]) {
+    if (!target || !(target instanceof Object)) return {};
+    return mapbase(target, keysOpt);
 }
 
 export function execVmOptions(optins: VmOptions, target: VmComponent) {
