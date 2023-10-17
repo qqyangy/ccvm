@@ -70,15 +70,16 @@ export class VmImage extends VmComponent {
                     return this._defaultSpriteFrame = this._sprite.SpriteFrame;
                 }
             },
-            removeImg() {
+            removeImg(desTroy: boolean = false) {
                 const sprite: Sprite = this._sprite;
                 if (!sprite) return;
                 const oldSpritFrame: SpriteFrame = sprite.spriteFrame;
                 if (!oldSpritFrame) return;
                 sprite.spriteFrame = null;
-                if (oldSpritFrame[srckey] && this.autoRelease) {
+                const isDes = desTroy || (oldSpritFrame[srckey] !== this.src)
+                if (oldSpritFrame[srckey] && this.autoRelease && isDes) {
                     // assetManager.releaseAsset(oldSpritFrame);
-                    oldSpritFrame.decRef();
+                    // oldSpritFrame.decRef();
                 }
             }
         },
