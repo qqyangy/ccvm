@@ -248,7 +248,7 @@ export class BindBase extends Component {
     public getVmNodeComponent(): VmComponent {
         if (!this.node) return null;
         let parent: Node = this.node.parent;
-        while (parent && parent instanceof Node && parent.components.length > 0) {
+        while (parent && parent instanceof Node && parent.components?.length > 0) {
             const vms = this.getVmComponent(parent),
                 vm = vms.find((_vm: VmComponent) => _vm.isVmNode);
             if (vm) return vm;
