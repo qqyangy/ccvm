@@ -37,6 +37,7 @@ export default class BindAlias {
     //初始配置
     public alias: Cfg = {
         text: "Label.string",
+        rText: "RichText.string",
         fontSize: "Label.fontSize",
         lineHeight: "Label.lineHeight",
         color: "Label.hexColorStr",//使用拓展属性
