@@ -100,6 +100,7 @@ export interface VmOptions {
         x: "node.x",
         y: "node.y",
         z: "node.z",
+        rotation: "node.rotationZ",
         scale: "node.scale",
         scaleX: "node.scaleX",
         scaleY: "node.scaleY",

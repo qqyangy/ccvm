@@ -53,6 +53,7 @@ export default class BindAlias {
         x: "node.x",
         y: "node.y",
         z: "node.z",
+        rotation: "UITransform.rotationZ",
         scale: "node.scale",
         scaleX: "node.scaleX",
         scaleY: "node.scaleY",

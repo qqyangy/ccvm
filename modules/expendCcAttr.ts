@@ -1,4 +1,4 @@
-import { Color, Label, Sprite } from 'cc';
+import { Color, Label, Sprite, UITransform } from 'cc';
 export function expendArrt() {
     Object.defineProperty(Label.prototype, "hexColorStr", {
         get() {
@@ -16,4 +16,12 @@ export function expendArrt() {
             this.color = new Color().fromHEX(color);
         }
     });
+    Object.defineProperty(UITransform.prototype, "rotationZ", {
+        get() {
+            return this._rotationZ;
+        },
+        set(v: number) {
+            this.node.setWorldRotationFromEuler(0, 0, v % 360);
+        }
+    })
 }
