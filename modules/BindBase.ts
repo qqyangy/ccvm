@@ -78,6 +78,15 @@ export class BindBase extends Component {
             return r[o.constructor.name] = o, r;
         }, { node: this.node }))
     }
+    /****获取附加数据***/
+    private _outerWithData: { $this: any, $vm: any };
+    private getOuterWith() {
+        if (this._outerWithData?.$vm) return this._outerWithData;
+        return this._outerWithData = {
+            $this: this,
+            $vm: this.getVmNodeComponent()
+        }
+    }
     // 绑定active
     private _disbindActive: Function;
     private _$bindActive: string;
@@ -104,13 +113,14 @@ export class BindBase extends Component {
         if (isForTemplet(this.node, vm.node)) return;
         this._$successbindActive = true;
         let active_val;
+        const outerwith = this.getOuterWith();
         const setdata = () => {
             if (!vm || !vm.___$dataEvent___ || vm.___$dataEvent___.destroy) return;
             const oDEs: any = oldDEs();
             DataEvent.DEs = new Set();
             let val;
             try {
-                val = evalfunc.call(vm, this.forWithdata, false, vm, compileFilter(valueStr, vm), undefined, vm.___$tempHelp___);
+                val = evalfunc.call(vm, outerwith, this.forWithdata, false, vm, compileFilter(valueStr, vm), undefined, vm.___$tempHelp___);
             } catch (e) {
                 console.log(`%c解析bindActive表达式求值"${valueStr}"出现错误`, 'color: red;');
                 console.log(e);
@@ -204,13 +214,14 @@ export class BindBase extends Component {
             }
             /******限定VmComponent组件只能被绑定props --end******/
             let listenerOff: Function;
+            const outerwith = this.getOuterWith();
             const setdata = () => {
                 if (!vm || !vm.___$dataEvent___ || vm.___$dataEvent___.destroy) return;
                 const oDEs: any = oldDEs();
                 DataEvent.DEs = new Set();
                 let val;
                 try {
-                    val = evalfunc.call(vm, this.forWithdata, false, vm, compileFilter(valueStr, vm), undefined, vm.___$tempHelp___);
+                    val = evalfunc.call(vm, outerwith, this.forWithdata, false, vm, compileFilter(valueStr, vm), undefined, vm.___$tempHelp___);
                 } catch (e) {
                     console.log(`%c解析binds表达式"${t}"中求值"${valueStr}"出现错误`, 'color: red;');
                     console.log(e);
@@ -226,7 +237,7 @@ export class BindBase extends Component {
                 DataEvent.DEs = recoveryDEs(oDEs);//处理完成后恢复之前状态
                 listenerOff && this.callDeBinds.add(listenerOff);//添加解除绑定函数
                 try {
-                    evalfunc.call(this, this.forWithdata, true, _components, attrStr + "=", val);
+                    evalfunc.call(this, outerwith, this.forWithdata, true, _components, attrStr + "=", val);
                 } catch (e) {
                     console.log(`%c解析binds表达式"${t}"中属性"${attrStr}"出现错误`, 'color: red;');
                     console.log(e);
@@ -286,11 +297,12 @@ export class BindBase extends Component {
                     }
                 }
             }
+            const outerwith = this.getOuterWith();
             let emitCount: number = 0; //事件触发计数
             const _eventHandler = (...p) => {
                 let val;
                 try {
-                    val = evalfunc.call(vm, this.forWithdata, false, vm, valueStr);
+                    val = evalfunc.call(vm, Object.assign({ $event: p[0] }, outerwith), this.forWithdata, false, vm, valueStr);
                 } catch (e) {
                     console.log(`%c解析event表达式"${exp}"中属性"${valueStr}"出现错误`, 'color: red;');
                     console.log(e);

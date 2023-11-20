@@ -1,7 +1,7 @@
-const evalfuncsring = `function ____evalfunc____(_____forWith_____,isAttr,optins,code,_____data_____,____tempHelp____){
-                var ____code____=isAttr?code+"_____data_____":code;
+const evalfuncsring = `function ____evalfunc____(_______outerWith_______,_____forWith_____,______isAttr______,optins,____code2____,_____data_____,____tempHelp____){
+                var ____code____=______isAttr______?____code2____+"_____data_____":____code2____;
                 ____tempHelp____=____tempHelp____||{};
-                with (____tempHelp____){
+                with (Object.assign({},_______outerWith_______,____tempHelp____)){
                     if(_____forWith_____){
                         with (optins) {
                             with (_____forWith_____) {
@@ -17,14 +17,14 @@ const evalfuncsring = `function ____evalfunc____(_____forWith_____,isAttr,optins
             }
             document.head.removeChild(document.getElementById("____evalfuncdom_____"));
             `
-function evalfunc(forWith: {}, isAttr: boolean, optins: any, code: any, _____data_____: any, tempHelp: {}) {
+function evalfunc(outerWith: {}, forWith: {}, isAttr: boolean, optins: any, code: any, _____data_____: any, tempHelp: {}) {
     if (!window["____evalfunc____"]) {
         const script = document.createElement("script");
         script.id = "____evalfuncdom_____";
         document.head.appendChild(script);
         script.innerHTML = evalfuncsring;
     }
-    return window["____evalfunc____"].call(this, forWith, isAttr, optins, code, _____data_____, tempHelp);
+    return window["____evalfunc____"].call(this, outerWith, forWith, isAttr, optins, code, _____data_____, tempHelp);
 }
 //test：attrStr与valueStr是否均存在  code：0 attrStr与valueStr均没有 1只有 attrStr 2只有valueStr 3都有
 function getExpressionAry(exp: string): { attrStr: string, valueStr: string, test: boolean, code: number } {
