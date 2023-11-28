@@ -75,7 +75,7 @@ export class BindBase extends Component {
     //获取当前节点挂在的所有组件和及节点
     private getMynodeComponents(): Object {
         return this._components || (this._components = this.node["_components"].reduce((r, o) => {
-            return r[o.constructor.name] = o, r;
+            return r[o["__classname__"] || o.constructor.name] = o, r;
         }, { node: this.node }))
     }
     /****获取附加数据***/
@@ -185,7 +185,7 @@ export class BindBase extends Component {
                     const vms: VmComponent[] = this.getVmComponent(this.node);
                     if (vms.length > 0) {
                         const itme: VmComponent = vms[0];
-                        exps.attrStr = exps.attrStr.replace("vm", itme.constructor.name);//可使用vm简称当前节点的第一个VmComponent
+                        exps.attrStr = exps.attrStr.replace("vm", itme["__classname__"] || itme.constructor.name);//可使用vm简称当前节点的第一个VmComponent
                     } else {
                         return console.warn("当前节点不存在任何VmComponent相关组件，绑定表达式无效:" + t);
                     }
