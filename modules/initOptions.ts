@@ -248,11 +248,21 @@ const formatDataRoProps = (_data: any, target: any) => {
                             DE.keys.add(k);
                         }
                         if (k in computedval) return computedval[k]; //有值直接返回
+                        let asyncChange: Function,//异步更新函数
+                            myComputedval: any,
+                            iscall: boolean = false;//是否在调用阶段
                         const getval = () => {
                             if (!target.___$dataEvent___ || target.___$dataEvent___.destroy) return computedval[k];
                             const oDEs: any = oldDEs();
                             DataEvent.DEs = new Set();//设置数据依赖收集口袋
-                            const myComputedval = computed[k].call(target);
+                            asyncChange = asyncChange || ((comValue) => {
+                                iscall = true;
+                                return myComputedval = target[k] = comValue;
+                            });
+                            iscall = false;
+                            const revalue = computed[k].call(target, asyncChange);
+                            myComputedval = iscall ? myComputedval : revalue;
+                            iscall = false;
                             const DEs: Set<DataEvent> = DataEvent.DEs;
                             listenerOff && listenerOff();//移除老的监听
                             listenerOff = !DEs ? null : listenerDEs(DEs, "bindUpdateSync", () => {
