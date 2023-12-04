@@ -40,6 +40,8 @@ export class VmFabLoad extends VmComponent {
     /***props****/
     @property(String)
     public src: string | number | Prefab = "0";//资源地址
+    @property(Number)
+    public delay: number = 0;//资源地址
     @property(Boolean)
     public autoRelease: boolean = true;//是否自动释放资源
 
@@ -149,9 +151,12 @@ export class VmFabLoad extends VmComponent {
             }
         },
         start() {
-            this.getpreSrc();
-            this.getextraLoads();
-            this.started = true;
+            setTimeout(() => {
+                if (!this.getpreSrc) return;
+                this.getpreSrc();
+                this.getextraLoads();
+                this.started = true;
+            }, this.delay || 0);
         },
         onDestroy() {
             const srcNode: Node = this.srcNode;
