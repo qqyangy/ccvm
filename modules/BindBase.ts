@@ -302,7 +302,7 @@ export class BindBase extends Component {
             const _eventHandler = (...p) => {
                 let val;
                 try {
-                    val = evalfunc.call(vm, Object.assign({ $event: p[0] }, outerwith), this.forWithdata, false, vm, valueStr);
+                    val = evalfunc.call(vm, Object.assign({ $event: p[0] }, outerwith), this.forWithdata, false, vm, valueStr, undefined, vm.___$tempHelp___);
                 } catch (e) {
                     console.log(`%c解析event表达式"${exp}"中属性"${valueStr}"出现错误`, 'color: red;');
                     console.log(e);
