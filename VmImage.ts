@@ -24,6 +24,7 @@ export class VmImage extends VmComponent {
     /*******获取图片******/
     public static getSpriteFrame(path: string | SpriteFrame | number, target?: VmImage): Promise<SpriteFrame> {
         return new Promise((resolve, reject) => {
+            if (path === "") return resolve(target.defaultSpriteFrame);
             if (target && target.preloads.length > 0 && typeof path === "number") {
                 return resolve(target.preloads[path]);//返回预设图片
             }
@@ -97,7 +98,7 @@ export class VmImage extends VmComponent {
         watchStartImmediate: ["src"],
         watch: {
             src(v) {
-                if (!v && v !== 0) return;
+                if (!v && v !== 0 && v !== "") return;
                 this.init();
                 this.promiseSpriteFrame = VmImage.getSpriteFrame(v, this);
             },
