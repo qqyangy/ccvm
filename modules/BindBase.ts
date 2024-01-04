@@ -1,4 +1,4 @@
-import { _decorator, Component, Node, CCString } from 'cc';
+import { _decorator, Component, Node, CCString, sys } from 'cc';
 import { VmComponent, VmOptions } from '../VmComponent';
 import { DataEvent, listenerDEs, oldDEs, recoveryDEs } from './DataEvent';
 import tools from './tools';
@@ -91,18 +91,20 @@ export class BindBase extends Component {
     private _disbindActive: Function;
     private _$bindActive: string;
     private _$successbindActive: boolean = false;//是否已经绑定bindActive
+    private _bindactiveListener: boolean = false;
     private initBindActive(nodefine: boolean = false) {
         if (this._$successbindActive) return;
         const valueStr = (this._$bindActive || "").trim();
-        if (!nodefine && !this._$bindActive) {
+        if (!nodefine && !this._$bindActive && !this._bindactiveListener) {
+            this._bindactiveListener = true;
             return Object.defineProperty(this, "bindActive", {
                 get: () => {
                     return this._$bindActive;
                 },
                 set: (bindstr: string) => {
                     this._$bindActive = bindstr;
-                    requestAnimationFrame(() => {
-                        this.initBindActive(true);
+                    !this._$successbindActive && requestAnimationFrame(() => {
+                        !this._$successbindActive && this.initBindActive(true);
                     })
                 }
             })
@@ -382,6 +384,7 @@ export class BindBase extends Component {
     }
     constructor(...p) {
         super(...p);
+        if (sys.platform === "EDITOR_PAGE") return;//不限制编辑器模式下的active状态
         this.initBindActive();
     }
 }
