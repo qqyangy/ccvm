@@ -40,25 +40,27 @@ export class VmFabLoad extends VmComponent {
     /***props****/
     @property(String)
     public src: string | number | Prefab = "0";//资源地址
-    @property(Number)
-    public delay: number = 0;//资源地址
+    @property({ type: Number, visible() { return this.morecfg || !!this.delay } })
+    public delay: number = 0;//延迟时间
     @property(Boolean)
     public autoRelease: boolean = true;//是否自动释放资源
+    @property(Boolean)
+    public morecfg: boolean = false
 
     /*****set****/
-    @property(Node)
+    @property({ type: Node, visible() { return this.morecfg || !!this.container } })
     public container: Node;//默认容器节点
-    @property(Node)
+    @property({ type: Node, visible() { return this.morecfg || !!this.comptemplet } })
     public comptemplet: Node;//组件模板
-    @property(String)
+    @property({ type: String, visible() { return this.morecfg || !!this.usecomps } })
     public usecomps: string = "";//要应用的组件
-    @property([Prefab])
+    @property({ type: [Prefab], visible() { return this.morecfg || this.preloads.length > 0 } })
     public preloads: Prefab[] = [];//预加载的预制件
 
-    @property(Node)
+    @property({ type: Node, visible() { return this.morecfg || !!this.loading } })
     loading: Node;//loading元素
 
-    @property({ type: [String], tooltip: "额外需要加载的资源带猴子按正确类型加载不带文件类型按图片类型加载" })
+    @property({ type: [String], tooltip: "额外需要加载的资源带猴子按正确类型加载不带文件类型按图片类型加载", visible() { return this.morecfg || this.extraAssets.length > 0 } })
     extraAssets: string[] = [];
 
     preSrc: Promise<Prefab> | Prefab;
