@@ -114,12 +114,13 @@ export class BindBase extends Component {
         if (!vm) return;
         if (isForTemplet(this.node, vm.node)) return;
         this._$successbindActive = true;
+        const noEditor = sys.platform !== "EDITOR_PAGE";//是否是编辑器模式
         let active_val;
         const outerwith = this.getOuterWith();
         const setdata = () => {
             if (!vm || !vm.___$dataEvent___ || vm.___$dataEvent___.destroy) return;
-            const oDEs: any = oldDEs();
-            DataEvent.DEs = new Set();
+            const oDEs: any = noEditor && oldDEs();
+            noEditor && (DataEvent.DEs = new Set());
             let val;
             try {
                 val = evalfunc.call(vm, outerwith, this.forWithdata, false, vm, compileFilter(valueStr, vm), undefined, vm.___$tempHelp___);
@@ -128,18 +129,20 @@ export class BindBase extends Component {
                 console.log(e);
                 // throw e;
             }
-            const Des: Set<DataEvent> = DataEvent.DEs;
+            const Des: Set<DataEvent> = noEditor && DataEvent.DEs;
             if (this._disbindActive) {
                 this._disbindActive();
             }
-            this._disbindActive = !Des ? null : listenerDEs(Des, "bindUpdate", setdata);
-            DataEvent.DEs = recoveryDEs(oDEs);//处理完成后恢复之前状态
-            this.activeAffirmactive = setdata;
-            this.forceActiveTrigger();
+            if (noEditor) {
+                this._disbindActive = !Des ? null : listenerDEs(Des, "bindUpdate", setdata);
+                DataEvent.DEs = recoveryDEs(oDEs);//处理完成后恢复之前状态
+                this.activeAffirmactive = setdata;
+                this.forceActiveTrigger();
+            }
             this.node.active = active_val = !!val;
         }
         setdata();
-        if (typeof active_val === "boolean" && this.node) {
+        if (typeof active_val === "boolean" && this.node && noEditor) {
             let _active = this.node.active;
             Object.defineProperty(this.node, "_active", {
                 get() { return _active; },
@@ -384,7 +387,6 @@ export class BindBase extends Component {
     }
     constructor(...p) {
         super(...p);
-        if (sys.platform === "EDITOR_PAGE") return;//不限制编辑器模式下的active状态
         this.initBindActive();
     }
 }
