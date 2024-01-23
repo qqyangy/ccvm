@@ -128,6 +128,23 @@ export enum VmExpandEvent {
 
 
 ##### `VmImage`异步加载图片或多个图片资源切换
+> 用于提供动态控制cc.Sprite 的 spriteFrame值的方案
+- `preloads: SpriteFrame[]` 可能使用到的spriteFrame集合
+- `src:number|string` 值为数值时则直接从preloads取出对应下标的值 为path时异步加载图片 加载成功后读取其spriteFrame 并赋值给cc.Sprite
+- `defaultSpriteFrame:SpriteFrame` 默认图片，当src为path时加载过程中零时应用的SpriteFrame
+- `autoRelease:boolean` 异步加载成功后的图片被切换后或者节点被移除后是否自动销毁资源
+  
 ##### `VmFabLoad`异步加预制件或多预制件资源切换
+```ts
+    src: string | number | Prefab = "0";//资源地址
+    delay: number = 0;//延迟时间
+    autoRelease: boolean = true;//是否自动释放资源
+    morecfg: boolean = false
 
+    container: Node;//默认容器节点
+    comptemplet: Node;//组件模板
+    usecomps: string = "";//要应用的组件
+    preloads: Prefab[] = [];//预加载的预制件
+    loading: Node;//loading元素
+```
   
