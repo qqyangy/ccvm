@@ -56,6 +56,8 @@ export class VmFabLoad extends VmComponent {
     public usecomps: string = "";//要应用的组件
     @property({ type: [Prefab], visible() { return this.morecfg || this.preloads.length > 0 } })
     public preloads: Prefab[] = [];//预加载的预制件
+    @property({ type: Boolean, visible() { return this.morecfg || !!this.useDestroy } })
+    public useDestroy: boolean = false;
 
     @property({ type: Node, visible() { return this.morecfg || !!this.loading } })
     loading: Node;//loading元素
@@ -72,6 +74,7 @@ export class VmFabLoad extends VmComponent {
     public vmRootName: string = "";
 
     nodestroy: boolean = true;//是否没销毁
+    isStarted: boolean = false;//是否执行start
 
     /********computed*******/
     containerBox: Node;//容器节点
@@ -150,27 +153,44 @@ export class VmFabLoad extends VmComponent {
                 this.extraLoads = this.extraAssets.map(t => {
                     return VmImage.getSpriteFrame(t);
                 });
+            },
+            startFunc() {
+                this.nodestroy = true;
+                setTimeout(() => {
+                    if (!this.getpreSrc) return;
+                    this.getpreSrc();
+                    this.getextraLoads();
+                    this.started = true;
+                }, this.delay || 0);
+            },
+            destroyFunc() {
+                const srcNode: Node = this.srcNode;
+                this.nodestroy = false;
+                const autoRelease = this.autoRelease;
+                desNode(srcNode, autoRelease);
+                autoRelease && Promise.all(this.extraLoads).then((assets) => {
+                    assets.forEach(d => {
+                        assetManager.releaseAsset(d);
+                    })
+                });
+                this.extraLoads = [];//清空预加载资源
             }
         },
+        onEnable() {
+            if (!this.useDestroy || !this.isStarted) return;//非自动销毁不处理
+            this.startFunc();
+        },
         start() {
-            setTimeout(() => {
-                if (!this.getpreSrc) return;
-                this.getpreSrc();
-                this.getextraLoads();
-                this.started = true;
-            }, this.delay || 0);
+            this.isStarted = true;
+            this.startFunc();
         },
         onDestroy() {
-            const srcNode: Node = this.srcNode;
-            this.nodestroy = false;
-            const autoRelease = this.autoRelease;
-            desNode(srcNode, autoRelease);
-            autoRelease && Promise.all(this.extraLoads).then((assets) => {
-                assets.forEach(d => {
-                    assetManager.releaseAsset(d);
-                })
-            });
-            this.extraLoads = [];//清空预加载资源
+            if (this.useDestroy) return;//已自动销毁不处理
+            this.destroyFunc();
+        },
+        onDisable() {
+            if (!this.useDestroy) return;//非自动销毁不处理
+            this.destroyFunc();
         },
         watch: {
             extraAssets() {
