@@ -3,6 +3,13 @@ import { VmComponent, VmOptions } from './VmComponent';
 const { ccclass, property } = _decorator;
 
 const srckey = "___src___";
+function getValueSpriteFrame(path: string | SpriteFrame | number, target?: VmImage) {
+    if (path === "") return { data: target.defaultSpriteFrame };
+    if (target && target.preloads.length > 0 && typeof path === "number") {
+        return { data: target.preloads[path] };//返回预设图片
+    }
+    if (path && path instanceof SpriteFrame) return { data: path };
+}
 @ccclass('VmImage')
 export class VmImage extends VmComponent {
 
@@ -22,13 +29,12 @@ export class VmImage extends VmComponent {
     public vmRootName: string = "";
 
     /*******获取图片******/
-    public static getSpriteFrame(path: string | SpriteFrame | number, target?: VmImage): Promise<SpriteFrame> {
+    public static getSpriteFrame(path: string | SpriteFrame | number, target?: VmImage, skipvl: boolean = false): Promise<SpriteFrame> {
         return new Promise((resolve, reject) => {
-            if (path === "") return resolve(target.defaultSpriteFrame);
-            if (target && target.preloads.length > 0 && typeof path === "number") {
-                return resolve(target.preloads[path]);//返回预设图片
+            if (!skipvl) {
+                const vl = getValueSpriteFrame(path, target);
+                if (vl) return resolve(vl.data);
             }
-            if (path && path instanceof SpriteFrame) return resolve(path);
             resources.load(`${path}/spriteFrame`, SpriteFrame, (err, spriteFrame) => {
                 if (err) {
                     return reject(err);
@@ -56,13 +62,18 @@ export class VmImage extends VmComponent {
     _sprite: Sprite;//节点对应的Sprite组件
     _defaultSpriteFrame: SpriteFrame;//默认SpriteFrame
     promiseSpriteFrame: Promise<SpriteFrame>;
+    isStart: boolean = false;
+
+    _cachSpriteFrame: { [key: string]: SpriteFrame } = {};
 
     public static vmOptions: VmOptions = {
-        data: ["promiseSpriteFrame"],
+        data: ["promiseSpriteFrame", "isStart"],
         props: ["src"],
         methods: {
             init() {
-                this._sprite = this._sprite = this.node.getComponent(Sprite);
+                const _sprite = this.node?.getComponent(Sprite);
+                if (!_sprite) return;
+                this._sprite = _sprite;
                 if (this._defaultSpriteFrame) return;
                 if (this.defaultSpriteFrame) {
                     return this._defaultSpriteFrame = this.defaultSpriteFrame;
@@ -82,36 +93,54 @@ export class VmImage extends VmComponent {
                     // assetManager.releaseAsset(oldSpritFrame);
                     // oldSpritFrame.decRef();
                 }
+            },
+            releaseImages() {
+                const sprite: Sprite = this._sprite;
+                sprite && (sprite.spriteFrame = null);
+                const cachSf: { [key: string]: SpriteFrame } = this._cachSpriteFrame || {};
+                this.autoRelease && Object.keys(cachSf).forEach(k => {
+                    cachSf[k].decRef();
+                });
+                this._cachSpriteFrame = null;
             }
         },
         onDestroy() {
-            this.removeImg();
-        },
-        onEnable() {
-            this.init();
+            this.releaseImages();
         },
         start() {
-            if (this.promiseSpriteFrame && this._sprite) {
-                this.promiseSpriteFrame.then(d => (this._sprite.spriteFrame = d))
+            this.isStart = true;
+        },
+        computed: {
+            currentSpriteFrame(_return) {
+                if (!this.isStart) return this.defaultSpriteFrame;
+                const src = this.src;
+                if (!src && src !== 0 && src !== "") return;
+                this.init();
+                const vl = getValueSpriteFrame(src, this);
+                if (vl) return vl.data;
+                const cachSf: { [key: string]: SpriteFrame } = this._cachSpriteFrame;
+                if (cachSf[src]) return cachSf[src];
+                _return(this._defaultSpriteFrame);
+                let isErr = false;;
+                VmImage.getSpriteFrame(src, this, true).catch((e) => {
+                    console.log(e);
+                    isErr = true;
+                    return this.defaultSpriteFrame;
+                }).then((sf: SpriteFrame) => {
+                    if (!isErr) {
+                        cachSf[src] = sf;
+                    }
+                    _return(cachSf[this.src] || sf);
+                    return sf;
+                });
             }
         },
-        watchStartImmediate: ["src"],
+        watchStartImmediate: ["currentSpriteFrame"],
         watch: {
-            src(v) {
-                if (!v && v !== 0 && v !== "") return;
-                this.init();
-                this.promiseSpriteFrame = VmImage.getSpriteFrame(v, this);
-            },
-            promiseSpriteFrame(p: Promise<SpriteFrame>) {
+            currentSpriteFrame(v: SpriteFrame) {
+                if (!this.isStart) return;
                 const sprite: Sprite = this._sprite;
-                if (!sprite || !p) return;
-                this.removeImg();//移除旧资源
-                p.then((sf: SpriteFrame) => (sprite.spriteFrame = sf)).catch((e) => {
-                    console.log(e);//图片加载失败
-                });
-                if (this._defaultSpriteFrame) {
-                    return sprite.spriteFrame = this._defaultSpriteFrame;
-                }
+                sprite && (sprite.spriteFrame = v);
             }
         }
     }
