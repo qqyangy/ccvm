@@ -40,10 +40,13 @@ export class VmForNode extends VmComponent {
         },
         methods: {
             execFor() {
-                const maxlength = Math.max(this.nodePool - this.nodePoolList.length - this.node.children.length, 0),
-                    childrenLength = this.node.children.length,
-                    children = maxlength >= childrenLength ? this.node.children : this.node.children.slice(0, childrenLength);
-                this.nodePoolList = children.concat(this.nodePoolList);
+                const childrenLength = this.node.children.length,
+                    maxlength = Math.max(Math.min(this.nodePool - this.nodePoolList.length, childrenLength), 0),
+                    children = this.node.children.slice(0, maxlength),
+                    nodePoolList: Node[] = this.nodePoolList = children.concat(this.nodePoolList);
+                this.node.children.forEach((n: Node) => {
+                    nodePoolList.indexOf(n) === -1 && n.destroy();
+                });
                 this.node.removeAllChildren();
                 const keys: string[] = this.accept_mapdata_keys;
                 keys.forEach((k, i) => {
@@ -92,6 +95,11 @@ export class VmForNode extends VmComponent {
         VmNode.join(this.node, { binds: [`VmForNode.accept_mapdata=${this.mapdata}`] });//创建数组的绑定关系
     }
     onDestroy() {
+        const children: Node[] = (this.node?.children || []) as Node[];
+        this.nodePoolList.forEach((n: Node) => {
+            children.indexOf(n) === -1 && n.destroy();
+        });
+        this.itemNode && this.itemNode.destroy();
         this.nodePoolList = [];
     }
 }
