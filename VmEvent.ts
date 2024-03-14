@@ -54,6 +54,9 @@ export class VmEvent extends Component {
             this.scheduleOnce(() => this.longEvent(e), Math.max(VmEvent.longTime, VmEvent.clickTime + 100) / 1000);
         }
     }
+    protected onDestroy(): void {
+        this.unscheduleAllCallbacks();
+    }
     //结算事件处理函数
     endEvent(e: EventTouch) {
         this.overEvent(e, "end");//触发over
