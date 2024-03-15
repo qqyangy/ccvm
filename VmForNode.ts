@@ -41,7 +41,8 @@ export class VmForNode extends VmComponent {
         methods: {
             execFor() {
                 const childrenLength = this.node.children.length,
-                    maxlength = Math.max(Math.min(this.nodePool - this.nodePoolList.length, childrenLength), 0),
+                    nodePool = this.nodePool || 100,
+                    maxlength = Math.max(Math.min(nodePool - this.nodePoolList.length, childrenLength), 0),
                     children = this.node.children.slice(0, maxlength),
                     nodePoolList: Node[] = this.nodePoolList = children.concat(this.nodePoolList);
                 this.node.children.forEach((n: Node) => {
