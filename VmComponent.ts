@@ -15,6 +15,7 @@ export class VmComponent extends Component {
     public ___bindKeys___: Set<string>;
     public static ___bindKeys___: Set<string>;
     public ___$dataEvent___: DataEvent;
+    public ___$listnerOffs___: Set<Function> = new Set();
     public ___$tempHelp___: {};
     public ___$dependentComputed___: { [key: string]: { unset: Function, set: Function } } = {};
     public ___$enabled___: boolean = false;//组件激活状态

@@ -234,7 +234,7 @@ const formatDataRoProps = (_data: any, target: any) => {
     setComputed = (opt: VmOptions, target: any, DE: DataEvent) => {
         const computed = opt.computed;
         if (!computed) return;
-        const computedval = {};
+        const computedval = {}, allListnerOffs: Set<Function> = target.___$listnerOffs___;
         const definopts: {} = Object.keys(computed).reduce((r: Object, k: string) => {
             if (computed[k] && computed[k] instanceof Function) {
                 let listenerOff: Function;
@@ -264,16 +264,23 @@ const formatDataRoProps = (_data: any, target: any) => {
                             myComputedval = iscall ? myComputedval : revalue;
                             iscall = false;
                             const DEs: Set<DataEvent> = DataEvent.DEs;
-                            listenerOff && listenerOff();//移除老的监听
+                            if (listenerOff) {
+                                allListnerOffs.delete(listenerOff);
+                                listenerOff();//移除老的监听
+                            }
                             listenerOff = !DEs ? null : listenerDEs(DEs, "bindUpdateSync", () => {
                                 target[k] = getval();
-                            }, target)
+                            }, target);
+                            listenerOff && allListnerOffs.add(listenerOff);
                             DataEvent.DEs = recoveryDEs(oDEs);//处理完成后恢复之前状态
                             if (DEs.size > 1 || !DEs.has(target.___$dataEvent___)) {
                                 const setComputed = target.___$dependentComputed___;
                                 setComputed[k] = {
                                     unset() {
-                                        listenerOff && listenerOff();//移除老的监听
+                                        if (listenerOff) {
+                                            allListnerOffs.delete(listenerOff);
+                                            listenerOff();//移除老的监听
+                                        }
                                     },
                                     set() {
                                         target[k] = getval();//恢复监听
@@ -307,7 +314,7 @@ const formatDataRoProps = (_data: any, target: any) => {
         const watch = opt.watch;
         Object.keys(watch).forEach((key: string) => {
             const watchfunc: Function = watch[key] as Function;
-            let listenerOff: Function, oldval: any;
+            let listenerOff: Function, oldval: any, allListnerOffs: Set<Function> = target.___$listnerOffs___;
             const getval = (nocall?: boolean) => {
                 if (!target.___$dataEvent___ || target.___$dataEvent___.destroy) return;
                 const oDEs: any = oldDEs();
@@ -316,8 +323,12 @@ const formatDataRoProps = (_data: any, target: any) => {
                     return r && Object.prototype.toString.call(r) === "[object Object]" ? r[_k] : undefined;
                 }, target);
                 const Des: Set<DataEvent> = DataEvent.DEs;
-                listenerOff && listenerOff();//移除老的监听
+                if (listenerOff) {
+                    allListnerOffs.delete(listenerOff);
+                    listenerOff();//移除老的监听
+                }
                 listenerOff = !Des ? null : listenerDEs(Des, "bindUpdate", getval);
+                listenerOff && allListnerOffs.add(listenerOff);
                 DataEvent.DEs = recoveryDEs(oDEs);//处理完成后恢复之前状态
                 if (!nocall) {
                     watchfunc.call(target, val, oldval);//调用watch
@@ -398,7 +409,9 @@ export function execVmOptions(optins: VmOptions, target: VmComponent) {
     const oldOnDestroy = optins.onDestroy;
     optins.onDestroy = function onDestroy() {
         oldOnDestroy && oldOnDestroy.call(this);
-        target.___$dataEvent___.destroy = true;
+        Array.from(target.___$listnerOffs___).forEach(fn => fn());
+        target.___$listnerOffs___ = null;
+        target.___$dataEvent___.clearEvents();
     };
     const events = optins.events = formatDataRoProps(optins.events, target),
         methods = optins.methods = formatDataRoProps(optins.methods, target),

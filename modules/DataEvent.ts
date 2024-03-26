@@ -39,6 +39,12 @@ export class DataEvent extends EventTarget {
     private _$vmMultipleBindUpdates: Set<string>;
     private _$vmMultipleBindUpdateValues: any;
     public destroy: boolean = false;//是否被移除
+    public clearEvents() {
+        this.destroy = true;
+        this.removeAll("bindUpdateSync");
+        this.removeAll("bindUpdate");
+        this.keys = this._$vmMultipleBindUpdateValues = this._$vmMultipleBindUpdates = null;
+    }
     public $vmMultipleBindUpdate(key: string, nValue: any, oValue: any) {
         if (this.destroy) return;
         this.emit("bindUpdateSync", [key], nValue, oValue);
