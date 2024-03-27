@@ -194,45 +194,6 @@ export class Router {
     cHashStr: string;//当前路由hash段
     autoDel: boolean = false;//是否需要在非激活状态时自动移除
 
-    //对容器节点的事件监听
-    nodeEvent(node: Node) {
-        let timeout;
-        const activechange = (n: Node) => {
-            if (!n || n.activeInHierarchy) {
-                if (this.lastDefaltOptions) {
-                    this.default(...this.lastDefaltOptions);
-                }
-                return;
-            };//载入时不处理
-            if (!this.autoDel) return;
-            clearTimeout(timeout);
-            timeout = setTimeout(() => {
-                // if (!node.activeInHierarchy && this.cHashStr && location.hash && location.hash.includes(this.cHashStr) && Router.getRouter(this.routerName)) {
-                //     const nhash = location.hash.replace(`#${this.cHashStr}`, "");
-                //     history.replaceState(null, null, nhash));//不需要产生历史记录时
-                // }
-                Router.delRouter(this.routerName);
-            });
-        }
-        const destroyedchange = () => {
-            clearTimeout(timeout);
-            timeout = setTimeout(() => {
-                if (Router.getRouter(this.routerName)) {
-                    offevent.forEach(fn => fn());
-                    Router.delRouter(this.routerName);
-                }
-            });
-        }
-        let pnode: Node = node;
-        const offevent: Function[] = [];
-        while (pnode && pnode instanceof Node) {
-            pnode.on(Node.EventType.ACTIVE_IN_HIERARCHY_CHANGED, activechange);//节点激活状态
-            offevent.push(() => pnode.off(Node.EventType.ACTIVE_IN_HIERARCHY_CHANGED, activechange));
-            node.once(Node.EventType.NODE_DESTROYED, destroyedchange);
-            pnode = pnode.parent;
-        }
-
-    }
     changeListener: Function;//路由切换监听函数
     transfer: Function;//路由转换策略函数
     transPrevs: Set<Node>;//原有节点
@@ -248,7 +209,6 @@ export class Router {
         this.routerName = option.routerName;
         Router.RouterBaseInstantiate[option.routerName] = this;
         this.node = option.routerViewNode;
-        this.nodeEvent(option.routerViewNode);
         option.routerViewNode["__Router__"] = this;
         this.routers = option.routerConfig || {};
         this.deletType = option.deletType || 0;
