@@ -18,11 +18,30 @@ export enum VmExpandEvent {
 export const VmEventTypeAll = Object.assign({}, VmEventType, VmExpandEvent);
 let RootNode: Node;
 const expandkeys: string[] = Object.keys(VmExpandEvent).map(t => t.toLowerCase());
+
+//所有全局事件
+const globalListners = {
+    [VmExpandEvent.CLICK]: new Set(),
+    [VmExpandEvent.OVER]: new Set(),
+    [VmExpandEvent.LONG]: new Set()
+};
 @ccclass('VmEvent')
 export class VmEvent extends Component {
     public static clickTime = 500;
     public static longTime = 1000;
     public static moveDistance = 5;
+
+    public static on(eventType: VmExpandEvent, handler: Function) {
+        globalListners[eventType].add(handler);
+    }
+    public static off(eventType: VmExpandEvent, handler: Function) {
+        globalListners[eventType].delete(handler);
+    }
+    public static offAll(eventType?: VmExpandEvent) {
+        eventType ? globalListners[eventType]?.clear() : Object.keys(VmExpandEvent).forEach((k) => {
+            globalListners[VmExpandEvent[k]]?.clear();
+        })
+    }
 
     @property({ type: CCString, tooltip: `需要扩展的事件名称用逗号隔开大小写不限\n可使用：${expandkeys.join("、")}` })
     useExp: string = "";
@@ -41,6 +60,9 @@ export class VmEvent extends Component {
     emit(eventType: string, event: EventTouch, ...p) {
         if (this.disable) return;
         this.node.emit(eventType, event, ...p);
+        globalListners[eventType] && Array.from(globalListners[eventType]).forEach((fn: Function) => {
+            fn(eventType, event, ...p);
+        })
     }
     //开始事件处理函数
     startEvent(e: EventTouch) {
