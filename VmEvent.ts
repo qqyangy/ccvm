@@ -25,11 +25,19 @@ const globalListners = {
     [VmExpandEvent.OVER]: new Set(),
     [VmExpandEvent.LONG]: new Set()
 };
+const coolingTime = {
+    [VmExpandEvent.CLICK]: null,//点击事件冷却状态
+    [VmExpandEvent.LONG]: null//长按事件冷却状态
+}
+let setCoolingTime: any;
 @ccclass('VmEvent')
 export class VmEvent extends Component {
     public static clickTime = 500;
     public static longTime = 1000;
     public static moveDistance = 5;
+    public static clickCooling: number = 500;//点击冷却时间
+    public static longCooling: number = 500;//长按冷却时间
+    public static disLong: boolean = false;//禁用全局长按事件
 
     public static on(eventType: VmExpandEvent, handler: Function) {
         globalListners[eventType].add(handler);
@@ -59,6 +67,19 @@ export class VmEvent extends Component {
     }
     emit(eventType: string, event: EventTouch, ...p) {
         if (this.disable) return;
+        if (eventType === VmExpandEvent.LONG && VmEvent.disLong) return;//长按事件被禁用时
+        if (eventType in coolingTime) {
+            if (!coolingTime[eventType]) {
+                clearTimeout(setCoolingTime);
+                setCoolingTime = setTimeout(() => {
+                    coolingTime[eventType] = setTimeout(() => {
+                        coolingTime[eventType] = null;
+                    }, eventType === VmExpandEvent.CLICK ? VmEvent.clickCooling : VmEvent.longCooling);
+                })
+            } else {
+                return;
+            }
+        }
         this.node.emit(eventType, event, ...p);
         globalListners[eventType] && Array.from(globalListners[eventType]).forEach((fn: Function) => {
             fn(eventType, event, ...p);
