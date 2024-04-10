@@ -24,7 +24,7 @@ export class BindBase extends Component {
     public getforWith: Function;//获取forWith
     public forWith: any;//直接forWith
     public get forWithdata() {
-        const getforWith = this.getforWith || (this.getforWith = getForWithdata(this.node, this.getVm().node, this.forWith));
+        const getforWith = this.getforWith || (this.getforWith = getForWithdata(this?.node, this?.getVm()?.node, this.forWith));
         return getforWith ? getforWith() : null;
     }
 
@@ -139,7 +139,7 @@ export class BindBase extends Component {
                 this.activeAffirmactive = setdata;
                 this.forceActiveTrigger();
             }
-            this.node.active = active_val = !!val;
+            this.node && (this.node.active = active_val = !!val);
         }
         setdata();
         if (typeof active_val === "boolean" && this.node && noEditor) {
