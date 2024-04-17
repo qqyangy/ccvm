@@ -62,8 +62,7 @@ export class VmForNode extends VmComponent {
                 const nodePoolList: Node[] = this.nodePoolList,
                     maxNodePool = this.ispoolquote ? (nodePoolList["maxPoollength"] || 10000) : Math.max(this.nodePool || 100, 0),//共享节点对象池允许10000的容量 自生对象池默认100
                     childrens: Node[] = [...this.node.children];
-                this.ispoolquote && VmForNode.desPoolquote(this._nodePoolList);
-                this.node.removeAllChildren();
+                // this.ispoolquote && VmForNode.desPoolquote(this._nodePoolList);
                 childrens.forEach((n: Node) => {
                     if (nodePoolList.length < maxNodePool) {
                         this.nodePoolList.push(n)
@@ -71,8 +70,10 @@ export class VmForNode extends VmComponent {
                         n.destroy();
                     }
                 });
-                const keys: string[] = this.accept_mapdata_keys;
+                this.node.removeAllChildren();
                 this.ispoolquote && await Promise.resolve(0);//如果使用了公用对象池则延缓添加以满足对象池的充分回收
+                this.node.removeAllChildren();
+                const keys: string[] = this.accept_mapdata_keys;
                 keys.forEach((k, i) => {
                     this.creatItemNode(this.accept_mapdataformat[k], i, k, keys.length);
                 });
@@ -81,7 +82,10 @@ export class VmForNode extends VmComponent {
         watchStartImmediate: ["accept_mapdata_keys"],
         watch: {
             accept_mapdata_keys() {
-                this.execFor();
+                clearTimeout(this.fortime);
+                this.fortime = setTimeout(() => {
+                    this.execFor();
+                })
             },
             node(nd: Node) {
                 nd && nd.children.length > 0 && this.nodeloaded(nd);//挂在成功
