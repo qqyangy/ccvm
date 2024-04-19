@@ -126,7 +126,7 @@ export class BindBase extends Component {
                 val = evalfunc.call(vm, outerwith, this.forWithdata, false, vm, compileFilter(valueStr, vm), undefined, vm.___$tempHelp___);
             } catch (e) {
                 console.log(`%c解析bindActive表达式求值"${valueStr}"出现错误`, 'color: red;');
-                console.log(this?.node);
+                console.log(this?.node, vm);
                 console.log(e);
                 // throw e;
             }
@@ -230,7 +230,7 @@ export class BindBase extends Component {
                     val = evalfunc.call(vm, outerwith, this.forWithdata, false, vm, compileFilter(valueStr, vm), undefined, vm.___$tempHelp___);
                 } catch (e) {
                     console.log(`%c解析binds表达式"${t}"中求值"${valueStr}"出现错误`, 'color: red;');
-                    console.log(this?.node);
+                    console.log(this?.node, vm);
                     console.log(e);
                     // throw e;
                 }
@@ -247,7 +247,7 @@ export class BindBase extends Component {
                     evalfunc.call(this, outerwith, this.forWithdata, true, _components, attrStr + "=", val);
                 } catch (e) {
                     console.log(`%c解析binds表达式"${t}"中属性"${attrStr}"出现错误`, 'color: red;');
-                    console.log(this?.node);
+                    console.log(this?.node, vm);
                     console.log(e);
                     // throw e;
                 }
@@ -313,7 +313,7 @@ export class BindBase extends Component {
                     val = evalfunc.call(vm, Object.assign({ $event: p[0] }, outerwith), this.forWithdata, false, vm, valueStr, undefined, vm.___$tempHelp___);
                 } catch (e) {
                     console.log(`%c解析event表达式"${exp}"中属性"${valueStr}"出现错误`, 'color: red;');
-                    console.log(this?.node);
+                    console.log(this?.node, vm);
                     console.log(e);
                     // throw e;
                 }

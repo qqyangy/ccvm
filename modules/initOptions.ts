@@ -27,6 +27,7 @@ type DataTypeC = DataType | (() => DataType);
 export interface VmOptions {
     data?: DataTypeC,
     props?: DataTypeC,
+    refTraceName?: String,//对refs的跟踪分类名
     refs?: DataTypeC,
     depth?: { [key: string]: number },//数据观察深度
     watch?: WatchOption,
@@ -396,8 +397,13 @@ export function execVmOptions(optins: VmOptions, target: VmComponent) {
     optins.data = formatDataRoProps(optins.data, target);
     optins.props = formatDataRoProps(optins.props, target);
     optins.refs = formatDataRoProps(optins.refs, target);
-    const oldOnEnable = optins.onEnable;
+    const oldOnEnable = optins.onEnable,
+        tracename = optins?.refTraceName;
     optins.onEnable = function onEnable() {
+        if (tracename && optins["refs"]) {
+            console.log(`%c[refs]《${tracename}》info:`, 'color: #30a;');
+            console.log(optins["refs"]);
+        }
         this.___$staticBindOnEnable___();
         oldOnEnable && oldOnEnable.call(this);
     };

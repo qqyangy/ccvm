@@ -1,4 +1,4 @@
-import { _decorator, Component, Node, EventTarget, CCString } from 'cc';
+import { _decorator, Component, CCString } from 'cc';
 import { execVmOptions, VmOptions as VmOptions2, mapStatic, mapObjct } from './modules/initOptions';
 import { DataEvent } from './modules/DataEvent';
 const { ccclass, property } = _decorator;
