@@ -13,18 +13,36 @@ const desNode = (n: Node, autoRelease: boolean) => {
     }
     n.destroy();
 }
+let loadFabEventDt = {};//onloadFab注册的事件
 @ccclass('VmFabLoad')
 export class VmFabLoad extends VmComponent {
+    public static onLoadFab(type: string, handler: Function) {
+        loadFabEventDt[type] = handler;
+    }
+    public static offLoadFab(type: string) {
+        loadFabEventDt[type] && delete loadFabEventDt[type];
+    }
+    public static offLoadFabAll() {
+        loadFabEventDt = {};
+    }
     public static loadFab(src: string): Promise<Prefab> {
-        return new Promise((resolve, reject) => {
-            resources.load(src.replace(/\.prefab$/, ""), Prefab, (err, prefab) => {
-                if (err) {
-                    return reject(err);
-                }
-                prefab[srckey] = src;
-                resolve(prefab);
+        const path = src.replace(/\.prefab$/, ""),
+            rut: Promise<Prefab> = new Promise((resolve, reject) => {
+                resources.load(path, Prefab, (err, prefab) => {
+                    if (err) {
+                        return reject(err);
+                    }
+                    prefab[srckey] = src;
+                    resolve(prefab);
+                });
             });
-        })
+        Object.keys(loadFabEventDt).forEach(key => {
+            loadFabEventDt[key](path, rut);
+        });
+        return rut;
+    }
+    public static releaseFab(path: string) {
+        resources.release(path);
     }
     public static async prefab2Node(dt: Promise<Prefab> | Prefab): Promise<Node> {
         if (!dt) return;
