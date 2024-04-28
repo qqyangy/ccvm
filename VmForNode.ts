@@ -81,11 +81,9 @@ export class VmForNode extends VmComponent {
         },
         watchStartImmediate: ["accept_mapdata_keys"],
         watch: {
-            accept_mapdata_keys() {
-                clearTimeout(this.fortime);
-                this.fortime = setTimeout(() => {
-                    this.execFor();
-                })
+            async accept_mapdata_keys() {
+                await Promise.resolve(0);
+                this.execFor && this.execFor();
             },
             node(nd: Node) {
                 nd && nd.children.length > 0 && this.nodeloaded(nd);//挂在成功
