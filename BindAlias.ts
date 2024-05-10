@@ -46,6 +46,7 @@ export default class BindAlias {
         image: "VmImage.src",
         "image#1": "VmImage.src",
         fabsrc: "VmFabLoad.src",
+        tvalue: "VmTransValue.value",
         width: "UITransform.width",
         height: "UITransform.height",
         anchorX: "UITransform.anchorX",
