@@ -42,6 +42,11 @@ export class VmComponent extends Component {
             execVmOptions(this._$vmOptions, this);
         }
     }
+    public $watchCall(watchName: string, ...args) {
+        const wopt = this._$vmOptions?.watch;
+        if (!wopt) return;
+        wopt[watchName] && (wopt[watchName] instanceof Function) && (wopt[watchName] as Function).call(this, ...args);
+    }
     protected ___$staticBindOnEnable___(): void {
         this.___$enabled___ = true;
         const cig = this.___$dependentComputed___,
