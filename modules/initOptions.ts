@@ -16,6 +16,7 @@ const validValue = (n, o) => {
 
 
 type Functions = { [key: string]: Function }
+type ComputedFunctions = { [key: string]: (_return?: (value: any) => any, valifresh?: () => boolean) => any }
 //watch类型
 type WatchItem = {
     [key: string]: Function | WatchOption,//其他值
@@ -36,7 +37,7 @@ export interface VmOptions {
     methods?: { [key: string]: Function | null } | string[],
     events?: { [key: string]: Function | null } | string[],//事件相应函数
     filters?: { [key: string]: Function | null } | string[],//过滤器相关函数
-    computed?: Functions,
+    computed?: ComputedFunctions,
     tempHelp?: {},//附加表达式取值变量集合如从cc中导出的对象
     created?: Function,//初始化完成执行
     mounted?: Function,//参数准备就绪执行
@@ -235,9 +236,12 @@ const formatDataRoProps = (_data: any, target: any) => {
     setComputed = (opt: VmOptions, target: any, DE: DataEvent) => {
         const computed = opt.computed;
         if (!computed) return;
-        const computedval = {}, allListnerOffs: Set<Function> = target.___$listnerOffs___;
+        const computedval = {}, allListnerOffs: Set<Function> = target.___$listnerOffs___,
+            computeCallIdent: any = {};//最后的调用标识
         const definopts: {} = Object.keys(computed).reduce((r: Object, k: string) => {
             if (computed[k] && computed[k] instanceof Function) {
+                const computFunc: Function = computed[k],
+                    comParleng: number = computFunc.length;
                 let listenerOff: Function;
                 r[k] = {
                     get() {
@@ -256,12 +260,18 @@ const formatDataRoProps = (_data: any, target: any) => {
                             if (!target.___$dataEvent___ || target.___$dataEvent___.destroy) return computedval[k];
                             const oDEs: any = oldDEs();
                             DataEvent.DEs = new Set();//设置数据依赖收集口袋
-                            asyncChange = asyncChange || ((comValue) => {
-                                iscall = true;
-                                return myComputedval = target[k] = comValue;
-                            });
+                            let valifresh, _return;
+                            if (comParleng > 0) {
+                                asyncChange = asyncChange || ((comValue) => {
+                                    iscall = true;
+                                    return myComputedval = target[k] = comValue;
+                                });
+                                const callIdent = computeCallIdent[k] = {};
+                                valifresh = () => callIdent === computeCallIdent[k];//验证是否新鲜
+                                _return = comParleng === 1 ? (comValue) => valifresh() && asyncChange(comValue) : asyncChange;//如果只有一个参数则自动验证新鲜度否则手动验证
+                            }
                             iscall = false;
-                            const revalue = computed[k].call(target, asyncChange);
+                            const revalue = computFunc.call(target, _return, valifresh);
                             myComputedval = iscall ? myComputedval : revalue;
                             iscall = false;
                             const DEs: Set<DataEvent> = DataEvent.DEs;

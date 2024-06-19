@@ -30,6 +30,8 @@ export class FreePoint extends VmComponent {
 ```
 - `vmOptions`可配置项
 ```ts
+
+type ComputedFunctions = { [key: string]: (_return?: (value: any) => any, valifresh?: () => boolean) => any }
 //watch类型
 type WatchItem = {
     [key: string]: Function | WatchOption,//其他值
@@ -47,7 +49,28 @@ export interface VmOptions {
     methods?: { [key: string]: Function | null } | string[],//配置函数
     events?: { [key: string]: Function | null } | string[],//事件相应函数
     filters?: { [key: string]: Function | null } | string[],//过滤器相关函数
-    computed?: Functions,//计算属性 配置有返回值的函数
+    computed?: ComputedFunctions,/*计算属性 配置有返回值的函数 如果不能计时得到值(存在异步)时，可给函数定义1和或2个函数参数 给第一个参数(函数)传值作为异步返回值 调用第二个参数（函数）可得到一个布尔值用于验证新鲜度 注意：无第2个参数时自动验证 实例如下：
+    computed{
+        //同步方式 也是最常用的方式
+        timevalue(){
+            return new Date(this.timestring).getTime();//通过返回值决定计算属性timevalue的值
+        },
+        timevalue1(_return){
+            _return(0);//未计算出值时使用的临时值（值类型需要符合该计算属性的类型要求）
+            const timestring=this.timestring;
+            setTimeout(()=>{
+                _return(new Date(timestring).getTime());//通过调用_return函数来异步决定计算属性timevalue1的值（会自动验证新鲜度）
+            },this.delay)
+        },
+        timevalue2(_return,valifresh){
+            _return(0);//未计算出值时使用的临时值（值类型需要符合该计算属性的类型要求）
+            const timestring=this.timestring;
+            setTimeout(()=>{
+                valifresh() && _return(new Date(timestring).getTime());//通过调用_return函数来异步决定计算属性timevalue1的值（但是调用前需要手动验证新鲜度否则不能确保计算属性值的准确性）
+            },this.delay)
+        }
+    }
+    */
     tempHelp?: {},//附加表达式取值变量集合如从cc中导出的对象
     created?: Function,//初始化完成执行
     mounted?: Function,//参数准备就绪执行
