@@ -390,12 +390,12 @@ function mapbase(target: any, keysOpt: { [key: string]: string } | string[]) {
     return result;
 }
 //映射静态属性
-export function mapStatic(target: any, keysOpt: { [key: string]: string } | string[]): Functions {
+export function mapStatic(target: any, keysOpt: { [key: string]: string } | string[]): ComputedFunctions {
     if (!target || !(target instanceof Function)) return {};
     return mapbase(target, keysOpt);
 }
 
-export function mapObjct(target: any, keysOpt: { [key: string]: string } | string[]) {
+export function mapObjct(target: any, keysOpt: { [key: string]: string } | string[]): ComputedFunctions {
     if (!target || !(target instanceof Object)) return {};
     return mapbase(target, keysOpt);
 }
