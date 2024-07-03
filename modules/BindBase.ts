@@ -300,9 +300,7 @@ export class BindBase extends Component {
                 eventAttr = typeStr || eventAttr; //拓展事件名称
                 veType = VmExpandEvent[veType] && veType || "";
                 if (typeStr && veType) {
-                    if (!this.node.getComponent(VmEvent)) {
-                        _VmEvent = this.node.addComponent(VmEvent);//获取VmEvent组件
-                    }
+                    _VmEvent = this.node.getComponent(VmEvent) || this.node.addComponent(VmEvent);//获取VmEvent组件
                 }
             }
             const outerwith = this.getOuterWith();
@@ -329,7 +327,8 @@ export class BindBase extends Component {
             return veType;
         }).filter(t => t).join(",");
         if (_VmEvent && vmEventCfg) {
-            _VmEvent.useExp = vmEventCfg;
+            const oldexp = _VmEvent.useExp || "";
+            _VmEvent.useExp = Array.from(new Set(oldexp.split(",").concat(vmEventCfg.split(",")))).join(",");
         }
     }
     deBindFunc() {
