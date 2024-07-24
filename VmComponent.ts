@@ -2,9 +2,11 @@ import { _decorator, Component, CCString } from 'cc';
 import { execVmOptions, VmOptions as VmOptions2, mapStatic, mapObjct } from './modules/initOptions';
 import { DataEvent } from './modules/DataEvent';
 const { ccclass, property } = _decorator;
-
+function pickUsefu(target: any, keys: string[]) {
+    return keys.reduce((r, k) => (r[k] = target[k], r), {});
+}
 export type VmOptions = VmOptions2;
-export { mapStatic, mapObjct };
+export { mapStatic, mapObjct, pickUsefu };
 @ccclass("VmComponent")
 export class VmComponent extends Component {
     @property(Boolean)
