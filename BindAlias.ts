@@ -49,6 +49,8 @@ export default class BindAlias {
         tvalue: "VmTransValue.value",
         width: "UITransform.width",
         height: "UITransform.height",
+        "widthUP": "UITransform.widthUP",
+        "heightUP": "UITransform.heightUP",
         anchorX: "UITransform.anchorX",
         anchorY: "UITransform.anchorY",
         x: "node.x",
