@@ -1,7 +1,9 @@
-import { _decorator, Component, Node, EventTarget, CCString, instantiate } from 'cc';
+import { _decorator, Node, CCString, instantiate } from 'cc';
 import forTool from './modules/forTool';
 import { VmComponent, VmOptions } from "./VmComponent";
 import { VmNode } from './VmNode';
+import { VmForItem } from './VmForItem';
+import tools from './modules/tools';
 
 const { ccclass, property } = _decorator;
 
@@ -33,6 +35,8 @@ export class VmForNode extends VmComponent {
 
     ispoolquote: boolean = false;//是否配置了公用对象池
     public itemNode: Node;
+    public itemNodeList: Node[];//多模版节点list
+    private itemIfTypes: string[];
     startcall: number = 0;//start调用 1watch调用 2start调用
     nodePoolList: Node[] = [];
     _nodePoolList: [] = [];//节点池
@@ -90,7 +94,7 @@ export class VmForNode extends VmComponent {
             }
         }
     };
-    instantiateItem(): Node {
+    instantiateItem(forWith: any): Node {
         if (this.ispoolquote && this.itemNode) {
             const itemNode = this.nodePoolList["itemNode"] = this.nodePoolList["itemNode"] || this.itemNode;//配置为共享模板
             if (this.itemNode !== itemNode) {
@@ -98,23 +102,37 @@ export class VmForNode extends VmComponent {
             }
             this.itemNode = itemNode;
         }
-        return this.nodePoolList.length > 0 ? this.nodePoolList.pop() : instantiate(this.itemNode);
+        if (this.itemNode) {
+            return this.nodePoolList.length > 0 ? this.nodePoolList.pop() : instantiate(this.itemNode);
+        }
+        if (this.itemNodeList) {
+            const itemIfTypes: string[] = this.itemIfTypes;
+            if (itemIfTypes.length < 1) return;
+            const showType: string = itemIfTypes.find(t => tools.evalfunc.call({}, {}, forWith, false, {}, t));
+            if (!showType) return;//没有可显示的类型则不处理
+            if (this.nodePoolList.length > 0) {
+                const index: number = this.nodePoolList.findIndex(n => n.getComponent(VmForItem)?.if === showType);
+                if (index > -1) return this.nodePoolList.splice(index, 1)[0];//从对象池中返回
+            }
+            const templet = this.itemNodeList.find(n => n.getComponent(VmForItem).if === showType);
+            return templet && instantiate(templet) || null;//用模版生成对象返回
+        }
     }
     creatItemNode(item, index, key, length) {
         const attrs = [item, index, key, length];
-        const _itemnode: Node = this.instantiateItem();
-        const _vmNode: VmNode = _itemnode.getComponent(VmNode);
         const forWith = (this.variables || "").split(",").reduce((r, k, i) => {
             if (!k || !k.trim()) return r;
             return r[k] = attrs[i], r;
         }, { ___VmforList__: this.mapdata });
+        const _itemnode: Node = this.instantiateItem(forWith);
+        if (!_itemnode) return;//条件不匹配添加
+        const _vmNode: VmNode = _itemnode.getComponent(VmNode);
         if (_vmNode) {
             _vmNode.forWith = forWith;
         }
         _itemnode[forTool.forWith] = forWith;
         _itemnode[forTool.forIndex] = index;
         this.node.addChild(_itemnode);
-
     }
     //组件挂在成功
     nodeloaded(node: Node) {
@@ -122,8 +140,15 @@ export class VmForNode extends VmComponent {
         this.itemNode[forTool.forItem] = true;
     }
     initBInd() {
-        this.itemNode = this.itemNode || this.node.children[0];
-        if (!this.itemNode) return;
+        const forItems = this.node.children.filter(n => n.getComponent(VmForItem)),
+            isForItem: boolean = forItems.length > 0;
+        this.itemNode = isForItem ? null : (this.itemNode || this.node.children[0]);
+        this.itemNodeList = isForItem && forItems || null;
+        this.itemIfTypes = isForItem && forItems.map(n => {
+            const fitem: VmForItem = n.getComponent(VmForItem);
+            return fitem.if;
+        }).filter(t => t) || null;
+        if (!this.itemNode && !this.itemNodeList) return;
         this.node.removeAllChildren();
         VmNode.join(this.node, { binds: [`VmForNode.accept_mapdata=${this.mapdata}`, this.poolquote ? `VmForNode.accept_poolquote=${this.poolquote}` : ""].filter(t => t) });//创建数组的绑定关系
     }
