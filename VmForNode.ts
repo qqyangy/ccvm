@@ -4,6 +4,7 @@ import { VmComponent, VmOptions } from "./VmComponent";
 import { VmNode } from './VmNode';
 import { VmForItem } from './VmForItem';
 import tools from './modules/tools';
+import { VmForArray } from './VmForArray';
 
 const { ccclass, property } = _decorator;
 
@@ -40,11 +41,14 @@ export class VmForNode extends VmComponent {
     startcall: number = 0;//start调用 1watch调用 2start调用
     nodePoolList: Node[] = [];
     _nodePoolList: [] = [];//节点池
-    accept_mapdata: [] | {};//数据集合
+    accept_mapdata: [] | {} | number | VmForArray;//数据集合
+    updateVmArray: number = 1;
     vmOptions: VmOptions = {
+        data: ["updateVmArray"],
         props: ["accept_mapdata", "accept_poolquote", "node"],
         computed: {
             accept_mapdataformat() {
+                if (this.accept_mapdata && this.accept_mapdata instanceof VmForArray) return this.updateVmArray, this.accept_mapdata.list;
                 return Object.prototype.toString.call(this.accept_mapdata) === "[object Number]" ? new Array(this.accept_mapdata).fill(0).map((v, i) => i) : this.accept_mapdata;
             },
             accept_mapdata_keys() {
@@ -81,9 +85,10 @@ export class VmForNode extends VmComponent {
                 keys.forEach((k, i) => {
                     this.creatItemNode(this.accept_mapdataformat[k], i, k, keys.length);
                 });
+                this.node.emit("vmForlisted");
             }
         },
-        watchStartImmediate: ["accept_mapdata_keys"],
+        watchStartImmediate: ["accept_mapdata_keys", "accept_mapdata"],
         watch: {
             async accept_mapdata_keys() {
                 await Promise.resolve(0);
@@ -91,6 +96,31 @@ export class VmForNode extends VmComponent {
             },
             node(nd: Node) {
                 nd && nd.children.length > 0 && this.nodeloaded(nd);//挂在成功
+            },
+            accept_mapdata(n, o) {
+                if (n === o) return;
+                if (o && o instanceof VmForArray && n !== o) {
+                    o.offAll();
+                    o.active = false;
+                }
+                if (n && n instanceof VmForArray) {
+                    n.offAll();
+                    n.active = true;
+                    const vfa: VmForArray = n;
+                    vfa.on(VmForArray.Event.PUSH, (ritem: any, item: any, index: number, length: number) => {
+                        this.creatItemNode(ritem, index, index, length);
+                        this.node.emit("vmForlisted");
+                    })
+                    vfa.on(VmForArray.Event.CONCAT, (rlist: any[], item: any, index: number, length: number) => {
+                        rlist.forEach((ritem: any, i) => {
+                            this.creatItemNode(ritem, index + i, index + i, length);
+                        })
+                        this.node.emit("vmForlisted");
+                    })
+                    vfa.on(VmForArray.Event.RESET, () => {
+                        this.updateVmArray++;//更新数据
+                    })
+                }
             }
         }
     };
@@ -152,7 +182,28 @@ export class VmForNode extends VmComponent {
         this.node.removeAllChildren();
         VmNode.join(this.node, { binds: [`VmForNode.accept_mapdata=${this.mapdata}`, this.poolquote ? `VmForNode.accept_poolquote=${this.poolquote}` : ""].filter(t => t) });//创建数组的绑定关系
     }
+    protected onEnable(): void {
+        const accept_mapdata = this.accept_mapdata;
+        if (accept_mapdata && accept_mapdata instanceof VmForArray) {
+            (accept_mapdata as VmForArray).active = true;
+        }
+    }
+    protected onDisable(): void {
+        const accept_mapdata = this.accept_mapdata;
+        if (accept_mapdata && accept_mapdata instanceof VmForArray) {
+            (accept_mapdata as VmForArray).active = false;
+        }
+    }
+    desVmForArray() {
+        const accept_mapdata = this.accept_mapdata;
+        if (accept_mapdata && accept_mapdata instanceof VmForArray) {
+            const vfa: VmForArray = accept_mapdata as VmForArray;
+            vfa.offAll();
+            vfa.active = false;
+        }
+    }
     onDestroy() {
+        this.desVmForArray();
         if (this.ispoolquote) return;
         const children: Node[] = (this.node?.children || []) as Node[];
         this.nodePoolList.forEach((n: Node) => {
