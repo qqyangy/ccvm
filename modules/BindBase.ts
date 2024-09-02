@@ -122,13 +122,17 @@ export class BindBase extends Component {
             const oDEs: any = noEditor && oldDEs();
             noEditor && (DataEvent.DEs = new Set());
             let val;
-            const activeInHierarchy = this.node?.parent?.activeInHierarchy;
+            let isErr: boolean = false;
             try {
-                val = activeInHierarchy && evalfunc.call(vm, outerwith, this.forWithdata, false, vm, compileFilter(valueStr, vm), undefined, vm.___$tempHelp___);
+                val = evalfunc.call(vm, outerwith, this.forWithdata, false, vm, compileFilter(valueStr, vm), undefined, vm.___$tempHelp___);
             } catch (e) {
-                console.log(`%c解析bindActive表达式求值"${valueStr}"出现错误`, 'color: red;');
-                console.log(this?.node, vm);
-                console.log(e);
+                isErr = true;
+                const activeInHierarchy = this.node?.parent?.activeInHierarchy;
+                if (activeInHierarchy) {
+                    console.log(`%c解析bindActive表达式求值"${valueStr}"出现错误`, 'color: red;');
+                    console.log(this?.node, vm);
+                    console.log(e);
+                }
                 // throw e;
             }
             const Des: Set<DataEvent> = noEditor && DataEvent.DEs;
@@ -141,7 +145,7 @@ export class BindBase extends Component {
                 this.activeAffirmactive = setdata;
                 this.forceActiveTrigger();
             }
-            activeInHierarchy && (this.node.active = active_val = !!val);
+            !isErr && (this.node.active = active_val = !!val);
         }
         setdata();
         if (typeof active_val === "boolean" && this.node && noEditor) {
