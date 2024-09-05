@@ -32,7 +32,7 @@
   - `VmRoot`并设置`VmRootName`属性与父级节点中最近一级具有`VmComponent`且勾选了`isVmNode`且有相同的`VmRootName`组件数据进行绑定
   - `VmSelf`建立与自身节点的`VmComponent`且勾选了`isVmNode`的组件建立数据绑定关系
 - **绑定组件属性设置**
-  ![](./mdimage/bind.png)
+  > ![属性设置界面](./mdimage/bind.png)
   - 1.`bindActive` 节点显示或隐藏的条件表达式：如：`1000<50` 或 `a===b` 或 `a<b && a>c`等 其中`a/b/c`为数据源组件的属性，当被依赖的数据发生变化时会自动重新计算决定节点的显示状态
   - 2.`binds`可设置0条或多条绑定表达式来同步当前节点或当前节点上挂载的组件数据，如：`Label.string=a+b`或`Sprite.spriteFrame=img`等 `=`的前半部分代表需要为当前节点或当前节点的某组件的某属性设置值`=`后半部分则为以数据源中的属性为基础数据的表达式
     >由于某些节点属性或节点组件属性使用频率太高所以支持别名设置，所有别名设置使用`:`前缀，如：`:text=a`等价于`Label.string=a`、`:src=img`等价于`Sprite.spriteFrame=img` 其它别名请参考[binds别名](#bind-alias)
