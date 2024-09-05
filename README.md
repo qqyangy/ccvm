@@ -1,6 +1,44 @@
 # ccvm
-> cocos creator 数据及事件绑定框架
+> cocos creator 以数据为基准驱动节点及节点组件变化的框架，当被关联的数据在发生变化后节点及节点上挂在的组件将会自动进行同步。
+#### 1.开发模式的转变
+- **重点关注**
+    - 数据的构造及维护
+    - 建立节点或节点上挂在的组件与数据的绑定关系
+- **尽量避免**
+    - 非做动画时尽量少获取节点及节点组件的引用来进行直接调整 如:尽量少用`getChildByName`、`getChildByPath`、`getComponent`等获得节点或组件进行手动操作
+#### 2.功能划分
+- **路由**(一小部分)
+  >控制主要界面的切换逻辑（前进、后退等）
+- **数据与节点及节点组件的关系建立**（主要）
+  >构件数据、建立数据与节点或节点组件的绑定关系
 
+#### 3.数据构件与数据绑定
+##### 数据源与子节点关系架构图
+- **数据源覆盖范围**
+  >所有继承自`VmComponent`组件对应的子节点（包括无限孙级节点）均可通过`VmNode/VmRoot/VmSelf`与当前的`VmComponent`提供的数据进行关联
+![数据源覆盖范围节点树图](./mdimage/nodes.png)
+- **数据源作用域及作用域遮罩图**
+  >所有`VmComponent`节点对应的子组件上如果也包含`VmComponent`组件则会产生数据源应用范围的（屏蔽）,但是可通过`VmRoot`来突破遮罩
+  ![数据源范围遮罩](./mdimage/mask.png)
+##### 数据源准备
+- **创建类并继承VmComponent** 代码编写规范请参考 [VmComponent编写](#VmComponent)
+  > `VmComponent`类继承自`cc.Component`,所以继承了`VmComponent`具备`cc.Component`的全部属性及方法（只是额外提供了构造可驱动数据的相关方法）
+- **设置为数据源**
+  > 只有设置为数据源的才可为子节点提供数据（勾选`isVmNode`属性，默认勾选）在勾选`isVmNode`了时也可设置`vmRootName`属性的值为`vmRoot`作为对应的`VmRoot`的数据源组件（没有`VmRoot`绑定需求的不需要设置而`vmRootName`属性的值）
+  ![创建数据源](./mdimage/isVmnode.png)
+##### 建立绑定关系
+- **在需要数据的子节点添加绑定组件**
+  - `VmNode`与具有`VmComponent`且勾选了`isVmNode`的父级节点中最近的一级建立绑定关系
+  - `VmRoot`并设置`VmRootName`属性与父级节点中最近一级具有`VmComponent`且勾选了`isVmNode`且有相同的`VmRootName`组件数据进行绑定
+  - `VmSelf`建立与自身节点的`VmComponent`且勾选了`isVmNode`的组件建立数据绑定关系
+- **绑定组件属性设置**
+  ![](./mdimage/bind.png)
+  - 1.`bindActive` 节点显示或隐藏的条件表达式：如：`1000<50` 或 `a===b` 或 `a<b && a>c`等 其中`a/b/c`为数据源组件的属性，当被依赖的数据发生变化时会自动重新计算决定节点的显示状态
+  - 2.`binds`可设置0条或多条绑定表达式来同步当前节点或当前节点上挂载的组件数据，如：`Label.string=a+b`或`Sprite.spriteFrame=img`等 `=`的前半部分代表需要为当前节点或当前节点的某组件的某属性设置值`=`后半部分则为以数据源中的属性为基础数据的表达式
+    >由于某些节点属性或节点组件属性使用频率太高所以支持别名设置，所有别名设置使用`:`前缀，如：`:text=a`等价于`Label.string=a`、`:src=img`等价于`Sprite.spriteFrame=img` 其它别名请参考[binds别名](#bind-alias)
+  - 3.`events`对当前节点注册指定事件并触发表达式的执行或数据源函数的执行 如：`touch-start=tapfunc` 或 `touch-start=tapcount+=1` `tapfunc`为数据源组件的一个方法 `tapcount`为数据源组件的一个number类型的属性
+    >`events`也支持部分常见的别名，别名使用`@`前缀 如：`@start=tapfunc`等同`touch-start=tapfunc` 且拓展了 `@click=tapfunc`(点击) `@lone=tapfunc`(长按) 更多事件别名请参考[事件别名](#event-alias)
+  - 4.`vmRootName`只有`VmRoot`组件才有的属性，用于匹配父级`VmComponent`且`vmRootName`相同的组件作为数据源
 #### 主要模块概览
 ```ts
 "ccvm/VmComponent.ts" // 数据依赖对象，继承自cc.Component
@@ -12,12 +50,7 @@
 "ccvm/Router.ts" //配置项目路由
 ```
 
-#### 关系结构
-##### `VmComponent`提供数源
-- 继承自`cc.Component`因此可用于平替`cc.Component`不会产生任何负面影响
-- 勾选`isVmNode`属性(默认勾选) 或 设置`vmRootName` 可向其子节点提供数据(层级不限)
-- 同等`VmComponent`具有向上屏蔽作用 即 如层级关系A>B>C>D>E>F 其中A和D具备相同的`VmComponent`(isVmNode设置相同或vmRootName设置相同) 其中其中B、C、D可从A中获取数据，而E、F由于D的屏蔽则只能从D中获取数据而不能从A中获取数据，如果要从A中获取可通过设置不同的`vmRootName`配合`VmRoot`来实现
-- 设置方式 配置`vmOptions`属性 例：
+#### <span id="VmComponent">`VmComponent`编写<span>
 ```ts
 import { VmComponent, VmOptions } from '../../ccvm/VmComponent';
 
@@ -84,13 +117,6 @@ export interface VmOptions {
     onDestroy?: Function,//生命周期函数同cc默认
 }
 ```
-##### `VmNode、VmRoot、VmSelf` 建立当前节点与数据源类的数据关联
-- `VmNode`建立当前节点与距离最近父级节点具有`VmComponent`且`isVmNode`勾选的数据关联
-- `VmRoot`建立当前节点与当前节点及父级节点中最近一级具有`VmComponent`且`vmRootName`与当前节点的`vmRootName`相同的数据关联 注：vmRootName为非空时
-- `VmSelf`建立当前节点的数据源组件与当前节点及其他组件直接的数据联系
-- `bindActive` 根据数据指定源数据值来自动控制设置当前节点的显示状态即`active`值
-- `binds` 根据数据源指定数据值来设置当前节点属性或当前节点上的组件属性值
-- `events`侦听当前节点的事件并使用数据源组件提供的方法作为相应
   
 ##### `VmRefs`获取节点引用
 - 获取当前节点或节点上关联的组件引用并设置到数据源组件的refs配置的属性中，多用高频率于代码直接控制节点时如绘制或tween动画等。
@@ -103,7 +129,7 @@ export interface VmOptions {
 - `$this`：当前节点的绑定节点自生组件
 - `$event`：`events`特有属性、用于获取事件的原始数据
 
-##### `binds`绑定属性的简写(简写属性前需要使用:符号)
+##### <span id="bind-alias">`binds`别名</span>（使用:为前缀）
 ```ts
     alias: Cfg = {
         text: "Label.string",
@@ -131,7 +157,7 @@ export interface VmOptions {
         opacity: "UIOpacity.opacity"
     };
 ```
-##### `events`事件简写与附加事件(需要在简写事件前使用@符号)
+##### <span id="event-alias">`events`别名</span>(需要在简写事件前使用@符号)
 ```ts
 export enum VmEventType {
     //事件简称 同cc系统提供事件
