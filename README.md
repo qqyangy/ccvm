@@ -31,6 +31,7 @@
   - `VmNode`与具有`VmComponent`且勾选了`isVmNode`的父级节点中最近的一级建立绑定关系
   - `VmRoot`并设置`VmRootName`属性与父级节点中最近一级具有`VmComponent`且勾选了`isVmNode`且有相同的`VmRootName`组件数据进行绑定
   - `VmSelf`建立与自身节点的`VmComponent`且勾选了`isVmNode`的组件建立数据绑定关系
+  - 循环列表请参考 [循环列表](#vmfor)
 - **绑定组件属性设置**
   > ![属性设置界面](./mdimage/bind.png)
   - 1.`bindActive` 节点显示或隐藏的条件表达式：如：`1000<50` 或 `a===b` 或 `a<b && a>c`等 其中`a/b/c`为数据源组件的属性，当被依赖的数据发生变化时会自动重新计算决定节点的显示状态
@@ -121,6 +122,45 @@ export interface VmOptions {
 ##### `VmRefs`获取节点引用
 - 获取当前节点或节点上关联的组件引用并设置到数据源组件的refs配置的属性中，多用高频率于代码直接控制节点时如绘制或tween动画等。
 
+
+#### <span id="vmfor">循环列表</span>
+>根据指定的数据创建/删除/更新列表
+  ##### 工作流程及组件关系
+  - 准备 **循环数据** 在数据源`VmComponent`中准备数据,数据可以是`any[]`或`{}`或`number`或`VmForArray` （支持直接在`VmForNode`配置字面量）
+  - 为 **容器节点** 添加`VmForNode`并配置循环数据及相关参数
+  - 配置 **子节点模板** 默认容器节点的第1个子节点，当item需要多样性时可以创建多个不同的子节点并添加`VmForItem`且设置渲染条件
+```
+/*****数据源（VmComponent）代码******/
+public btnlist: any[] = [
+        { text: "战斗", id: 20 },
+        { text: "商店", id: 35 },
+        { text: "人物", id: 53 }
+    ]
+```
+![渲染列表](./mdimage/vmnoderunner.png)
+  ##### VmForNode 配置
+  >![vmfor配置](./mdimage/vmfornode.png)
+  - 1. **nodePool** 节点对象池最大存储数量（-1时可通过`poolquote`配置共享对象池）
+    >对于频繁变动的列表配置合理大小的对象池可以降低item创建与销毁的频率（尽可能复用节点对象池内缓存节点）从而提高性能
+  - 2. **poolquote** 当存在多处相同item模板循环列表时，可以指定数据源提供的一个数组作为共享对象池（减少内存的占用），但对象池大小及清空则需要手动管理
+  - 3. **mapdata** 需要循环的数据（属性名或字面量）表达式支持`any[]`或`{}`或`number`或`VmForArray`
+    >number时代表要产生指定数量的子节点
+  - 4. **variables** 为循环子节点item及背部节点执行域额外提供变量用逗号隔开分别用于依次映射数据项item、索引index、键名key、循环数组长度length
+    >以btnlist数据为例 假如variables值设为：o,i,k,l 则：
+    第1个节点 读取到的o为btnlist[0],i为0,k为0，l为3
+    第2个节点 读取到的o为btnlist[1],i为0,k为1，l为3
+    第3个节点 读取到的o为btnlist[2],i为0,k为2，l为3
+  ##### VmForItem 配置
+  >![vmforitem](./mdimage/vmforitem.png)
+  通过if配置的表达式确定使用使用当前模板渲染当前数据项
+  ##### VmForArray 类
+  >专门为`VmForNode.mapdata`提供数据的类，用于不刷新原有列表的前提下新增列表项
+   - **属性**
+    - `length`列表数据长度（number）
+    - `active`数据激活状态（boolean）设置为false时添加数据不会促发VmForNode追加子节点
+   - **方法** 
+    - `push` 向列表尾部追加1个或多个数据（多个时用,隔开）
+    - `concat` 将某的数组的所有数据项追加到列表尾部
 
 
 #### 补充说明
