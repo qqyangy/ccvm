@@ -72,9 +72,9 @@ type WatchItem = {
 }
 type WatchOption = { [key: string]: WatchItem | Function }
 export interface VmOptions {
-    data?: string[]||{},
-    props?: string[]||{},
-    refs?: string[]||{},
+    data?: string[]|{},
+    props?: string[]|{},
+    refs?: string[]|{},
     depth?: { [key: string]: number },//数据观察深度
     watch?: WatchOption,
     watchImmediate?: string[],//保证初始化立即执行1次
@@ -136,20 +136,22 @@ export interface VmOptions {
         rText: "RichText.string",
         fontSize: "Label.fontSize",
         lineHeight: "Label.lineHeight",
-        color: "Label.hexColorStr",//使用拓展属性
-        bgColor: "Sprite.hexColorStr",
+        color: "Label.hexColorStr",//使用扩展属性 用法  :color="#ffffff"
+        bgColor: "Sprite.hexColorStr",//使用扩展属性 用法   :color="#ff0000"
         src: "Sprite.spriteFrame",
-        image: "VmImage.src",
-        "image#1": "VmImage.src",
-        fabsrc: "VmFabLoad.src",
+        image: "VmImage.src",//直接使用字符串path对应的图片作为Sprite的显示内容，使用这个属性会先判断node上是否有VmImage组件没有时会自动添加(不需要带png后缀) 用法 :image="images/bg"
+        "image#1": "VmImage.src",//同image区别在于image会在图片没有加载成功之前依然用原来的图片而image#1则是在图片没有加载成功之前使用VmImage配置的默认图片没有默认图片
+        fabsrc: "VmFabLoad.src",//动态载入prefab 用法  :fabsrc="prefabs/header.prefab"
         width: "UITransform.width",
         height: "UITransform.height",
         anchorX: "UITransform.anchorX",
         anchorY: "UITransform.anchorY",
+        widthUP: "UITransform.widthUP",//扩展属性基本等同width区别在于widthUP会强制刷新不限子级节点的的Wiaget
+        heightUP: "UITransform.heightUP",//扩展属性 意义同widthUP
         x: "node.x",
         y: "node.y",
         z: "node.z",
-        rotation: "node.rotationZ",
+        rotation: "node.rotationZ",//扩展属性沿z轴旋转角度数
         scale: "node.scale",
         scaleX: "node.scaleX",
         scaleY: "node.scaleY",
@@ -158,6 +160,13 @@ export interface VmOptions {
     };
 ```
 ##### <span id="event-alias">`events`别名</span>(需要在简写事件前使用@符号)
+  - `@start` 按下 同原生事件`touch-start`
+  - `@end` 抬起 同原生事件`touch-end`
+  - `@move` 移动 同原生事件`touch-move`
+  - `@cancel` 取消 同原生事件`touch-cancel`
+  - `@click` 点击 扩展事件类似事件click（结合一系列基础事件计算）
+  - `@over` 移除 扩展事件类似事件（结合一系列基础事件计算）
+  - `@long` 长按 扩展事件（结合一系列基础事件计算）
 ```ts
 export enum VmEventType {
     //事件简称 同cc系统提供事件
