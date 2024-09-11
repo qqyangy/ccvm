@@ -23,6 +23,7 @@ export class BindBase extends Component {
 
     public getforWith: Function;//获取forWith
     public forWith: any;//直接forWith
+    private _parentSeek: boolean = true;//是否存在父节点
     public get forWithdata() {
         const getforWith = this.getforWith || (this.getforWith = getForWithdata(this?.node, this?.getVm()?.node, this.forWith));
         return getforWith ? getforWith() : null;
@@ -145,7 +146,11 @@ export class BindBase extends Component {
                 this.activeAffirmactive = setdata;
                 this.forceActiveTrigger();
             }
-            !isErr && (this.node.active = active_val = !!val);
+            const _parentSeek = this._parentSeek = !!this?.node?.parent;
+            if (!isErr && _parentSeek) {
+                this.node.active = active_val = !!val;
+            }
+
         }
         setdata();
         if (typeof active_val === "boolean" && this.node && noEditor) {
@@ -359,7 +364,7 @@ export class BindBase extends Component {
             this._offTriggerFunc = null;
         }
     };
-    activeTrigger(n?) {
+    activeTrigger() {
         this.isActiveTrigger = true;
         if (!this.bindActive) return;
         this.parentnode = this.node.parent;
@@ -379,13 +384,18 @@ export class BindBase extends Component {
             this.initBindActive(true);
             this._isInitBindActive = true;
         }
-        this.activeTrigger(1);
+        this.activeTrigger();
     }
     start() {
         nodeSet(this.node);
         this.bindAttribute();
         this.bindEvent();
         this.node.emit(myEventName.mounted);//触发mounted事件
+        this.node.on(Node.EventType.PARENT_CHANGED, () => {
+            if (!this._parentSeek && this.node?.parent && this.activeAffirmactive) {
+                this.activeAffirmactive();//父节点发生变化事件监听
+            }
+        })
     }
     onDisable() {
         this.deBindFunc();
