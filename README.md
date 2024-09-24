@@ -45,8 +45,7 @@
       - 父`VmComponent`向子`VmComponent`传递数据
         - 父`VmComponent`构造数据
         - 子`VmComponent`申明`props`并在对应添加绑定组件进行绑定
-          > 例：父`VmComponent`申明数据<br>![申明data数据](./mdimage/data.png)
-          子`VmComponent`申明porps<br>![申明pops](./mdimage/pops.png)<br>并且使用`VmNode`进行数据绑定<br>![bindpops](./mdimage/bindpops.png)<br>此处`vm.seasonData`是简写写法正常写法是`UserRemuneration.seasonData`。注：所有`VmComponent**`组件且勾选了`isVmNode`在进行绑定时均可使用`vm`替代
+          > 例：父`VmComponent`申明数据<br>![申明data数据](./mdimage/data.png)<br>子`VmComponent`申明porps<br>![申明pops](./mdimage/pops.png)<br>并且使用`VmNode`进行数据绑定<br>![bindpops](./mdimage/bindpops.png)<br>此处`vm.seasonData`是简写写法正常写法是`UserRemuneration.seasonData`。注：所有`VmComponent**`组件且勾选了`isVmNode`在进行绑定时均可使用`vm`替代
       - 子`VmComponent`向父`VmComponent`传数据
         - 在父`VmComponent`中申明事件侦听函数
         - 在子`VmComponent`所有在节点的数据绑定组件（`VmNode/VmRoot`）的events中定义绑定表达式
