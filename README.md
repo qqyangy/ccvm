@@ -45,13 +45,13 @@
       - 父`VmComponent`向子`VmComponent`传递数据
         - 父`VmComponent`构造数据
         - 子`VmComponent`申明`props`并在对应添加绑定组件进行绑定
-          > 例：父`VmComponent`申明数据![申明data数据](./mdimage/data.png)
-          子`VmComponent`申明porps![申明pops](./mdimage/pops.png)<br>并且使用`VmNode`进行数据绑定![bindpops](./mdimage/bindpops.png)<br>此处`vm.seasonData`是简写写法正常写法是`UserRemuneration.seasonData`。注：所有`VmComponent**`组件且勾选了`isVmNode`在进行绑定时均可使用`vm`替代
+          > 例：父`VmComponent`申明数据<br>![申明data数据](./mdimage/data.png)
+          子`VmComponent`申明porps<br>![申明pops](./mdimage/pops.png)<br>并且使用`VmNode`进行数据绑定<br>![bindpops](./mdimage/bindpops.png)<br>此处`vm.seasonData`是简写写法正常写法是`UserRemuneration.seasonData`。注：所有`VmComponent**`组件且勾选了`isVmNode`在进行绑定时均可使用`vm`替代
       - 子`VmComponent`向父`VmComponent`传数据
         - 在父`VmComponent`中申明事件侦听函数
         - 在子`VmComponent`所有在节点的数据绑定组件（`VmNode/VmRoot`）的events中定义绑定表达式
         - 在子`VmComponent`所有在节点`emit`事件对应的事件并传递参数
-          >例：父 `VmComponent`申明事件侦听函数![事件侦听函数](./mdimage/eventhandler.png)<br>子`VmComponent`对应的绑定组件添加侦听表达式![绑定事件](./mdimage/bingdevent.png)<br>然后触发事件![触发事件](./mdimage/emit.png)
+          >例：父 `VmComponent`申明事件侦听函数<br>![事件侦听函数](./mdimage/eventhandler.png)<br>子`VmComponent`对应的绑定组件添加侦听表达式<br>![绑定事件](./mdimage/bingdevent.png)<br>然后触发事件<br>![触发事件](./mdimage/emit.png)
    - 跨多级`VmComponent`或共享数据传递
       - 使用类的静态属性传递 然后使用`mapStatic`方法关联到对应的组件计算属性（`computed`）
         >步骤：<br>1.声明静态属性<br>![创建静态属性](./mdimage/static.png) <br>2.引入`mapStatic`方法<br>![引入mapstatic](./mdimage/importstatic.png)<br>3.映射到计算属性<br>![应用映射](./mdimage/usestatic.png)<br>4.使用数据<br>![使用映射数据](./mdimage/readmapstatic.png)<br>
@@ -175,8 +175,7 @@ public btnlist: any[] = [
     第2个节点 读取到的o为btnlist[1],i为0,k为1，l为3
     第3个节点 读取到的o为btnlist[2],i为0,k为2，l为3
   ##### VmForItem 配置
-  >![vmforitem](./mdimage/vmforitem.png)
-  通过if配置的表达式确定使用使用当前模板渲染当前数据项
+  >![vmforitem](./mdimage/vmforitem.png)<br>通过if配置的表达式确定使用使用当前模板渲染当前数据项
   ##### VmForArray 类
   >专门为`VmForNode.mapdata`提供数据的类，用于不刷新原有列表的前提下新增列表项（构造函数需要传入一个数组作为参数）
    - **属性**
