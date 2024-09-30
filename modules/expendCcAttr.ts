@@ -43,6 +43,16 @@ export function expendArrt() {
                     this[k] = v;
                     searchWiaget(this.node);
                 }
+            },
+            [`${k}UP2`]: {
+                get() {
+                    return this[k];
+                },
+                set(v) {
+                    this[k] = v;
+                    searchWiaget(this.node);
+                    setTimeout(() => this.node && searchWiaget(this.node));
+                }
             }
         })
     }, {}))

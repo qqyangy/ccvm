@@ -212,6 +212,8 @@ public btnlist: any[] = [
         anchorY: "UITransform.anchorY",//设置节点锚点y位置
         widthUP: "UITransform.widthUP",//扩展属性基本等同width区别在于widthUP会强制刷新不限子级节点的的Wiaget
         heightUP: "UITransform.heightUP",//扩展属性 意义同widthUP
+        widthUP2: "UITransform.widthUP2",//在widthUP的基础上增加一次延迟刷新子节点Wiaget
+        heightUP2: "UITransform.heightUP2",//在heightUP的基础上增加一次延迟刷新子节点Wiaget
         x: "node.x",//设置节点x轴位置
         y: "node.y",//设置节点y轴位置
         z: "node.z",//设置节点z轴位置

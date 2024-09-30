@@ -51,6 +51,8 @@ export default class BindAlias {
         height: "UITransform.height",
         "widthUP": "UITransform.widthUP",
         "heightUP": "UITransform.heightUP",
+        "widthUP2": "UITransform.widthUP2",
+        "heightUP2": "UITransform.heightUP2",
         anchorX: "UITransform.anchorX",
         anchorY: "UITransform.anchorY",
         x: "node.x",
