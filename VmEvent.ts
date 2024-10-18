@@ -35,7 +35,7 @@ export class VmEvent extends Component {
     public static clickTime = 500;
     public static longTime = 1000;
     public static moveDistance = 5;
-    public static clickCooling: number = 500;//点击冷却时间
+    public static clickCooling: number = 200;//点击冷却时间
     public static longCooling: number = 500;//长按冷却时间
     public static disLong: boolean = false;//禁用全局长按事件
 
