@@ -10,6 +10,18 @@ import { myEventName } from './keyName';
 import { VmTriggerEvent } from '../VmTriggerEvent';
 import { VmImage } from '../VmImage';
 
+//调试日志工具
+const VmDebugLogs = window["VmDebugLogs"] = {
+    path(node: any, maxDepth: number = 20) {
+        let path = "", depth = 0;
+        while (node && node._name && depth < maxDepth) {
+            path = path ? `${node._name}/${path}` : node._name;
+            node = node.parent;
+            depth++;
+        }
+        return path;
+    }
+}
 const { evalfunc, compileFilter, getExpressionAry } = tools;
 const { ccclass, property } = _decorator;
 
@@ -131,6 +143,7 @@ export class BindBase extends Component {
                 const activeInHierarchy = this.node?.parent?.activeInHierarchy;
                 if (activeInHierarchy) {
                     console.log(`%c解析bindActive表达式求值"${valueStr}"出现错误`, 'color: red;');
+                    this?.node && console.log(VmDebugLogs.path(this?.node));
                     console.log(this?.node, vm);
                     console.log(e);
                 }
@@ -240,6 +253,7 @@ export class BindBase extends Component {
                     val = evalfunc.call(vm, outerwith, this.forWithdata, false, vm, compileFilter(valueStr, vm), undefined, vm.___$tempHelp___);
                 } catch (e) {
                     console.log(`%c解析binds表达式"${t}"中求值"${valueStr}"出现错误`, 'color: red;');
+                    this?.node && console.log(VmDebugLogs.path(this?.node));
                     console.log(this?.node, vm);
                     console.log(e);
                     // throw e;
@@ -257,6 +271,7 @@ export class BindBase extends Component {
                     evalfunc.call(this, outerwith, this.forWithdata, true, _components, attrStr + "=", val);
                 } catch (e) {
                     console.log(`%c解析binds表达式"${t}"中属性"${attrStr}"出现错误`, 'color: red;');
+                    this?.node && console.log(VmDebugLogs.path(this?.node));
                     console.log(this?.node, vm);
                     console.log(e);
                     // throw e;
@@ -323,6 +338,7 @@ export class BindBase extends Component {
                     val = evalfunc.call(vm, Object.assign({ $event: p[0] }, outerwith), this.forWithdata, false, vm, valueStr, undefined, vm.___$tempHelp___);
                 } catch (e) {
                     console.log(`%c解析event表达式"${exp}"中属性"${valueStr}"出现错误`, 'color: red;');
+                    this?.node && console.log(VmDebugLogs.path(this?.node));
                     console.log(this?.node, vm);
                     console.log(e);
                     // throw e;
